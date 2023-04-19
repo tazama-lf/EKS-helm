@@ -1,0 +1,144 @@
+{{- $functionNs := default .Release.Namespace .Values.functionNamespace }}
+{{- if .Values.oidcAuthPlugin.enabled }}
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: {{ template "openfaas.name" . }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    component: oidc-plugin
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
+  name: oidc-plugin
+  namespace: openfaas
+spec:
+  replicas: {{ .Values.oidcAuthPlugin.replicas }}
+  selector:
+    matchLabels:
+      app: oidc-plugin
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: "false"
+      labels:
+        app: oidc-plugin
+    spec:
+      volumes:
+      - name: oidc-plugin-temp-volume
+        emptyDir: {}
+      {{- if .Values.basic_auth }}
+      - name: auth
+        secret:
+          secretName: basic-auth
+      {{- end }}
+      - name: license
+        secret:
+          secretName: openfaas-license
+      containers:
+      - name:  oidc-plugin
+        resources:
+          {{- .Values.oidcAuthPlugin.resources | toYaml | nindent 12 }}
+        image: {{ .Values.oidcAuthPlugin.image }}
+        imagePullPolicy: Always
+        {{- if .Values.securityContext }}
+        securityContext:
+          readOnlyRootFilesystem: true
+          runAsUser: 10001
+        {{- end }}
+        livenessProbe:
+          {{- if .Values.httpProbe }}
+          httpGet:
+            path: /health
+            port: 8080
+          {{- else }}
+          exec:
+            command:
+            - wget
+            - --quiet
+            - --tries=1
+            - --timeout=5
+            - --spider
+            - http://localhost:8080/health
+          {{- end }}
+          timeoutSeconds: 5
+        readinessProbe:
+          {{- if .Values.httpProbe }}
+          httpGet:
+            path: /health
+            port: 8080
+          {{- else }}
+          exec:
+            command:
+            - wget
+            - --quiet
+            - --tries=1
+            - --timeout=5
+            - --spider
+            - http://localhost:8080/health
+          {{- end }}
+          timeoutSeconds: 5
+        args:
+        - "-license-file=/var/secrets/license/license"
+        {{- if .Values.oidcAuthPlugin.verbose }}
+        - "-verbose=true"
+        {{- end }}
+        - "-provider={{- .Values.oidcAuthPlugin.provider}}"
+        env:
+        - name: client_id
+          value: "{{- .Values.oidcAuthPlugin.clientID}}"
+        - name: client_secret
+          value: "{{- .Values.oidcAuthPlugin.clientSecret}}"
+        - name: cookie_domain
+          value: "{{- .Values.oidcAuthPlugin.cookieDomain}}"
+        - name: base_host
+          value: "{{- .Values.oidcAuthPlugin.baseHost}}"
+        - name: port
+          value: "8080"
+        - name: openid_url
+          value: "{{- .Values.oidcAuthPlugin.openidURL}}"
+        - name: welcome_page_url
+          value: "{{- .Values.oidcAuthPlugin.welcomePageURL}}"
+        - name: public_key_path
+          value: ""
+        - name: audience
+          value: "{{- .Values.oidcAuthPlugin.audience}}"
+        - name: scopes
+          value: "{{- .Values.oidcAuthPlugin.scopes}}"
+        - name: insecure_tls
+          value: "{{- .Values.oidcAuthPlugin.insecureTLS}}"
+        {{- if .Values.basic_auth }}
+        - name: secret_mount_path
+          value: "/var/secrets/gateway"
+        {{- end }}
+        volumeMounts:
+        - name: oidc-plugin-temp-volume
+          mountPath: /tmp
+        {{- if .Values.basic_auth }}
+        - name: auth
+          readOnly: true
+          mountPath: "/var/secrets/gateway"
+        {{- end }}
+        - name: license
+          readOnly: true
+          mountPath: "/var/secrets/license"
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+
+    {{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+
+{{- end }}

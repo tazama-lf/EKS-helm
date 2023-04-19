@@ -1,0 +1,4 @@
+# Chart.yaml
+apiVersion: v2
+name: nuxeo
+version: 1.0.0

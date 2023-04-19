@@ -1,0 +1,15 @@
+# file: values.yaml
+image:
+  repository: nuxeo/nuxeo
+  tag: latest
+nuxeo:
+  authentication:
+    rootPassword: mysecretpassword
+  serviceType: ClusterIP
+  replicas: 1
+  single:
+    enabled: true
+    imagePullPolicy: IfNotPresent
+    image: nuxeo/nuxeo
+    version: latest
+    servicePort: 8080

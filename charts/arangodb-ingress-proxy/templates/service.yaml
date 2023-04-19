@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Service
+metadata:
+    name: arangodb-ingress-proxy
+    namespace: development
+    labels:
+        app.kubernetes.io/name: arangodb-ingress-proxy
+        helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        release: {{ .Release.Name }}
+        meta.helm.sh/release-namespace: development
+spec:
+    ports:
+        - name: server
+          protocol: TCP
+          port: 443
+          targetPort: 443
+          nodePort: 32369
+    selector:
+        app.kubernetes.io/name: arangodb-ingress-proxy
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        release: {{ .Release.Name }}
+        meta.helm.sh/release-namespace: development
+    type: LoadBalancer

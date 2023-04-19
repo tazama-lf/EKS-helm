@@ -1,0 +1,343 @@
+functionNamespace: openfaas-fn  # Default namespace for functions
+
+# Contact us via https://www.openfaas.com/support to purchase a license
+openfaasPro: false
+namespace: openfaas
+
+httpProbe: true               # Setting to true will use HTTP for readiness and liveness probe on the OpenFaaS core components
+clusterRole: false            # Set to true for multiple namespaces, pro scaler and CPU/RAM metrics in OpenFaaS REST API
+createCRDs: true              # Set to false if applying CRDs in another way
+
+basic_auth: true              # Authentication for core components, no good reason to disable this
+rbac: true                    # Kubernetes RBAC, no good reason to disable this
+generateBasicAuth: true       # Set to false if applying credentials separately from the chart, otherwise set to true
+securityContext: true
+
+exposeServices: true
+serviceType: NodePort        # serviceType for OpenFaaS gateway
+async: true                  # No known reason to disable this, kept for legacy reasons 
+
+queueMode: ""                # Set to `jetstream` to run the async system backed by NATS JetStream. By default the async system uses NATS Streaming 
+
+# create pod security policies for OpenFaaS control plane
+# https://kubernetes.io/docs/concepts/policy/pod-security-policy/
+psp: false
+
+# image pull policy for openfaas components, can change to `IfNotPresent` in offline env
+openfaasImagePullPolicy: "Always"
+
+# openfaasPro components, which require openfaasPro=true
+# clusterRole is also recommended for collecting CPU/RAM metrics for Pro add-ons
+
+postInstall:
+  - name: create-CRD
+    manifest: |-
+      apiVersion: openfaas.com/v1
+      kind: Profile
+      metadata:
+        labels:
+          app.kubernetes.io/managed-by: Helm
+        annotations:
+          meta.helm.sh/release-name: infra-chart
+          meta.helm.sh/release-namespace: development
+          helm.sh/hook: "postInstall"
+        name: nodeselector
+
+# OpenFaaS Pro
+## Advanced auto-scaler for scaling functions on RPS, CPU and in-flight requests
+## Includes: scale to zero
+autoscaler:
+  image: ghcr.io/openfaasltd/autoscaler:0.2.9
+  replicas: 1
+  enabled: true
+  resources:
+    requests:
+      memory: "128Mi"
+    limits:
+      memory: "256Mi"
+  # When disableHorizontalScaling is set to true, then the autoscaler will 
+  # only scale to zero, without scaling replicas between the defined Min and Max
+  # count for the function
+  disableHorizontalScaling: false
+
+# OpenFaaS Pro
+## To use with port-forwarding, set publicURL to 
+## http://127.0.0.1
+dashboard:
+  image: ghcr.io/openfaasltd/openfaas-dashboard:0.2.0
+  publicURL: https://dashboard.example.com
+  # Name of signing key secret for sessions.
+  # Leave blank for development, see https://docs.openfaas.com/openfaas-pro/dashboard/ for production and staging.
+  signingKeySecret: ""
+  replicas: 1
+  enabled: false
+  resources:
+    requests:
+      memory: "128Mi"
+    limits:
+      memory: "256Mi"
+
+# OpenFaaS Pro
+## faasIdler is the original scale to zero feature, but must
+## now be set "enabled=false" when using the new autoscaler
+## since it handles scaling to zero
+faasIdler:
+  image: ghcr.io/openfaasltd/faas-idler:0.5.3
+  replicas: 1
+  enabled: false
+  inactivityDuration: 3m                # If a function is inactive for 15 minutes, it may be scaled to zero
+  reconcileInterval: 2m                 # The interval between each attempt to scale functions to zero
+  readOnly: false                       # When set to true, no functions are scaled to zero
+  writeDebug: false                     # Write additional debug information
+  resources:
+    requests:
+      memory: "64Mi"
+
+# OpenFaaS Pro
+## OIDC plugin for authentication on the OpenFaaS REST API
+oidcAuthPlugin:
+  enabled: false
+  verbose: false # debug setting
+  provider: "" # Put "azure" if using Azure as a provider, leave blank for any other provider.
+  insecureTLS: false
+  scopes: "openid profile email"
+  openidURL: "https://example.eu.auth0.com/.well-known/openid-configuration"
+  audience: https://example.eu.auth0.com/api/v2/
+  welcomePageURL: https://gateway.openfaas.example.com
+  cookieDomain: ".openfaas.example.com"
+  baseHost: "https://auth.openfaas.example.com"
+  clientSecret: ""
+  clientID: ""
+  resources:
+    requests:
+      memory: "120Mi"
+      cpu: "50m"
+  replicas: 1
+  image: ghcr.io/openfaasltd/openfaas-oidc-plugin:0.5.5
+  securityContext: true
+
+gatewayPro:
+  image: ghcr.io/openfaasltd/gateway:0.2.13
+
+gateway:
+  image: ghcr.io/openfaas/gateway:0.26.3
+  readTimeout: "65s"
+  writeTimeout: "65s"
+  upstreamTimeout: "60s"  # Must be smaller than read/write_timeout
+  replicas: 1
+  scaleFromZero: true
+  # change the port when creating multiple releases in the same baremetal cluster
+  nodePort: 31112
+  maxIdleConns: 1024
+  maxIdleConnsPerHost: 1024
+  directFunctions: false
+  # Custom logs provider url. For example openfaas-loki would be
+  # "http://ofloki-openfaas-loki.openfaas:9191/"
+  logsProviderURL: ""
+
+  # Set to true for Istio users as a workaround for:
+  # https://github.com/openfaas/faas/issues/1721
+  probeFunctions: false
+
+  # See the HPA rule from the Customer Community
+  # https://github.com/openfaas/openfaas-pro/blob/master/gateway-hpa.yaml
+  resources:
+    requests:
+      memory: "120Mi"
+      cpu: "50m"
+
+  readinessProbe:
+    initialDelaySeconds: 0
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+    successThreshold: 1
+
+  livenessProbe:
+    initialDelaySeconds: 0
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+    successThreshold: 1
+
+faasnetesPro:
+  image: ghcr.io/openfaasltd/faas-netes:0.2.5
+
+operatorPro:
+  image: ghcr.io/openfaasltd/faas-netes:0.2.5
+
+faasnetes:
+  image: ghcr.io/openfaas/faas-netes:0.16.6
+  imagePullPolicy: "Always"    # Image pull policy for deployed functions
+  httpProbe: true              # Setting to true will use HTTP for readiness and liveness probe on function pods
+  setNonRootUser: false        # It's recommended to set this to "true", but test your images before committing to it
+  readinessProbe:
+    initialDelaySeconds: 2
+    timeoutSeconds: 1           # Tuned-in to run checks early and quickly to support fast cold-start from zero replicas
+    periodSeconds: 2            # Reduce to 1 for a faster cold-start, increase higher for lower-CPU usage
+  livenessProbe:
+    initialDelaySeconds: 2
+    timeoutSeconds: 1
+    periodSeconds: 2           # Reduce to 1 for a faster cold-start, increase higher for lower-CPU usage
+  resources:
+    requests:
+      memory: "120Mi"
+      cpu: "50m"
+
+operator:
+  image: ghcr.io/openfaas/faas-netes:0.16.6
+  create: false
+  resources:
+    requests:
+      memory: "120Mi"
+      cpu: "50m"
+
+# The values for jetstreamQueueWorker are merged with those under
+# the "queueWorkerPro" and "queueWorker" section
+#  
+# Enable automatically when nats.queueMode is set to "jetstream"
+jetstreamQueueWorker:
+  image: ghcr.io/openfaasltd/jetstream-queue-worker:0.3.6
+  durableName: "faas-workers"
+  # Configure the max waiting pulls for the queue-worker JetStream consumer. 
+  # The value should be at least max_inflight * replicas.
+  # Note that this value can not be updated once the consumer is created.
+  maxWaiting: 512
+  logs:
+    debug: false
+    format: "console"
+
+# OpenFaaS Pro
+# The values for queueWorkerPro are merged with those under
+# the "queueWorker" section
+#
+# To deploy additional named queues, see the "queue-worker"
+# chart
+#
+# Enabled automatically when openfaasPro is set to true
+queueWorkerPro:
+  image: ghcr.io/openfaasltd/queue-worker:0.2.2
+  maxRetryAttempts: "10"
+  maxRetryWait: "120s"
+  initialRetryWait: "10s"
+  # 408 Request Timeout message
+  # 429 Too Many Requests
+  # 500 Internal Server Error
+  # 502 Bad Gateway
+  # 503 Service Unavailable
+  # 504 Gateway Timeout
+  httpRetryCodes: "408,429,500,502,503,504"
+  insecureTLS: false
+  printRequestBody: false
+  printResponseBody: false
+  # Control the concurrent invocations
+  maxInflight: 50
+
+# Community Edition, maxInflight is 1
+# Name of shared queue is "faas-request"
+queueWorker:
+  image: ghcr.io/openfaas/queue-worker:0.13.3
+  # Control HA of queue-worker
+  replicas: 1
+  queueGroup: "faas"
+  ackWait: "60s"
+  resources:
+    requests:
+      memory: "120Mi"
+      cpu: "50m"
+
+# monitoring and auto-scaling components
+# both components
+prometheus:
+  image: prom/prometheus:v2.42.0
+  create: true
+  resources:
+    requests:
+      memory: "512Mi"
+  annotations: {}
+
+alertmanager:
+  image: prom/alertmanager:v0.25.0
+  create: true
+  resources:
+    requests:
+      memory: "25Mi"
+    limits:
+      memory: "50Mi"
+
+stan:
+  # Image used for the NATS Streaming when using the deprecated 
+  # support in the Community Edition (CE)
+  image: nats-streaming:0.25.3
+
+# NATS (required for async)
+nats:
+  channel: "faas-request"
+  # Stream replication is set to 1 by default. This is only recommended for development.
+  # For production a value of at least 3 is recommended for NATS JetStream to be resilient.
+  # See https://github.com/openfaas/openfaas-pro/blob/master/jetstream.md
+  streamReplication: 1
+  external:
+    clusterName: ""
+    enabled: false
+    host: ""
+    port: ""
+  # The version of NATS Core used with OpenFaaS Pro and JetStream
+  image: nats:2.9.15
+  enableMonitoring: false
+  metrics:
+    # Should stay off by default because the exporter is not multi-arch (yet)
+    enabled: false
+    image: natsio/prometheus-nats-exporter:0.10.1
+  resources:
+    requests:
+      memory: "120Mi"
+
+# ingress configuration
+ingress:
+  enabled: true
+  ## For k8s >= 1.18 you need to specify the pathType
+  ## See https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/#better-path-matching-with-path-types
+  #pathType: ImplementationSpecific
+
+  # Used to create Ingress record (should be used with exposeServices: false).
+  hosts:
+    - host: gateway.openfaas.local  # Replace with gateway.example.com if public-facing
+      serviceName: gateway
+      servicePort: 8080
+      path: /
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    meta.helm.sh/release-name: openfaas
+    meta.helm.sh/release-namespace: openfaas
+  tls:
+  # Secrets must be manually created in the namespace.
+
+  ## You can specify the ingress controller by using the ingressClassName
+  #ingressClassName: nginx
+
+# ingressOperator (optional) – component to have specific FQDN and TLS for Functions
+# https://github.com/openfaas-incubator/ingress-operator
+ingressOperator:
+  image: ghcr.io/openfaas/ingress-operator:0.8.0
+  replicas: 1
+  create: false
+  resources:
+    requests:
+      memory: "25Mi"
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+kubernetesDNSDomain: cluster.local
+
+istio:
+  mtls: false
+
+gatewayExternal:
+  annotations: {}
+
+k8sVersionOverride: "" #  Allow kubeVersion to be overridden for the ingress creation

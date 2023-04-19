@@ -1,0 +1,298 @@
+apiVersion: v1
+entries:
+  apm-server:
+  - apiVersion: v1
+    appVersion: 8.5.1
+    created: "2023-04-19T12:52:29.2426103+02:00"
+    description: Official Elastic helm chart for Elastic APM Server
+    digest: 925ea28b98e6750d1e87dab2c3cb1622f98f5e2ba41da2ed5b25ee6368cf93eb
+    home: https://github.com/elastic/helm-charts
+    icon: https://helm.elastic.co/icons/apm.png
+    maintainers:
+    - email: helm-charts@elastic.co
+      name: Elastic
+    name: apm-server
+    sources:
+    - https://github.com/elastic/apm
+    urls:
+    - apm-server-8.5.1.tgz
+    version: 8.5.1
+  arangodb:
+  - apiVersion: v2
+    created: "2023-04-19T12:52:29.2431375+02:00"
+    digest: 74d1cc7fa555a288376bef49db5cf0923a0af2ad869e4c2daea55b67b245e2f4
+    name: arangodb
+    urls:
+    - arangodb-1.0.0.tgz
+    version: 1.0.0
+  arangodb-ingress-proxy:
+  - apiVersion: v1
+    created: "2023-04-19T12:52:29.2443567+02:00"
+    description: ArangoDB Ingress Proxy
+    digest: 829f505e8e6befc47e457d4dc345a936e28fd4c1e409563b643faad7d5dcf697
+    name: arangodb-ingress-proxy
+    urls:
+    - arangodb-ingress-proxy-1.0.0.tgz
+    version: 1.0.0
+  elasticsearch:
+  - apiVersion: v1
+    appVersion: 8.5.1
+    created: "2023-04-19T12:52:29.2477021+02:00"
+    description: Official Elastic helm chart for Elasticsearch
+    digest: 27b56e1446985e4a3dac0b01240cf2fcf0096ffdade79ba1e05d9f35d82cab46
+    home: https://github.com/elastic/helm-charts
+    icon: https://helm.elastic.co/icons/elasticsearch.png
+    maintainers:
+    - email: helm-charts@elastic.co
+      name: Elastic
+    name: elasticsearch
+    sources:
+    - https://github.com/elastic/elasticsearch
+    urls:
+    - elasticsearch-8.5.1.tgz
+    version: 8.5.1
+  infra-chart:
+  - apiVersion: v2
+    created: "2023-04-19T12:52:29.248246+02:00"
+    description: A Helm chart for installing infrastructure components for the FRMS
+      system.
+    digest: 20e8b71b6215a345e5cc4e351e87563c84b16842e41bc7d712071585f40c3be6
+    name: infra-chart
+    type: application
+    urls:
+    - infra-chart-1.0.0.tgz
+    version: 1.0.0
+  jenkins:
+  - apiVersion: v2
+    appVersion: 2.387.1
+    created: "2023-04-19T12:52:29.2521094+02:00"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 2.x.x
+    description: Jenkins is an open source Continuous Integration and Continuous Delivery
+      (CICD) server designed to automate the building, testing, and deploying of any
+      software project.
+    digest: 2b4dc7cfa50da4d65002cd41c1249ddcceab6e54e8a463ae74a5372738cb856f
+    home: httpsgithub.combitnamichartstreemainbitnamijenkins
+    icon: httpsbitnami.comassetsstacksjenkinsimgjenkins-stack-220x234.png
+    keywords:
+    - jenkins
+    - ci
+    - cd
+    - http
+    - web
+    - application
+    maintainers:
+    - name: Bitnami
+    name: jenkins
+    sources:
+    - httpsgithub.combitnamicontainerstreemainbitnamijenkins
+    - httpsjenkins.io
+    urls:
+    - jenkins-12.0.1.tgz
+    version: 12.0.1
+  keycloak:
+  - annotations:
+      category: DeveloperTools
+      licenses: Apache-2.0
+    apiVersion: v2
+    appVersion: 21.0.2
+    created: "2023-04-19T12:52:29.2596331+02:00"
+    dependencies:
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 12.x.x
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 2.x.x
+    description: Keycloak is a high performance Java-based identity and access management
+      solution. It lets developers add an authentication layer to their applications
+      with minimum effort.
+    digest: d9bb49ae9fc53e017c3a4a1267546687c3740266f9c1ce0f4daa9353e8b6c02b
+    home: https://www.keycloak.org
+    icon: https://bitnami.com/assets/stacks/keycloak/img/keycloak-stack-220x234.png
+    keywords:
+    - keycloak
+    - access-management
+    maintainers:
+    - name: Bitnami
+      url: https://github.com/bitnami/charts
+    name: keycloak
+    sources:
+    - https://github.com/bitnami/containers/tree/main/bitnami/keycloak
+    - https://github.com/keycloak/keycloak
+    urls:
+    - keycloak-14.2.0.tgz
+    version: 14.2.0
+  kibana:
+  - apiVersion: v1
+    appVersion: 8.5.1
+    created: "2023-04-19T12:52:29.2624975+02:00"
+    description: Official Elastic helm chart for Kibana
+    digest: 6d7e2000d41e7dafb51024e131e30e9641e21bd755ade10f61ae853f896737c9
+    home: https://github.com/elastic/helm-charts
+    icon: https://helm.elastic.co/icons/kibana.png
+    maintainers:
+    - email: helm-charts@elastic.co
+      name: Elastic
+    name: kibana
+    sources:
+    - https://github.com/elastic/kibana
+    urls:
+    - kibana-8.5.1.tgz
+    version: 8.5.1
+  logstash:
+  - apiVersion: v1
+    appVersion: 8.5.1
+    created: "2023-04-19T12:52:29.2640794+02:00"
+    description: Official Elastic helm chart for Logstash
+    digest: 5725ecaf33301f15e1a38451d7a93ca55530b907593d61f3b749ae97c0874239
+    home: https://github.com/elastic/helm-charts
+    icon: https://helm.elastic.co/icons/logstash.png
+    maintainers:
+    - email: helm-charts@elastic.co
+      name: Elastic
+    name: logstash
+    sources:
+    - https://github.com/elastic/logstash
+    urls:
+    - logstash-8.5.1.tgz
+    version: 8.5.1
+  nginx-ingress-controller:
+  - annotations:
+      category: Infrastructure
+      licenses: Apache-2.0
+    apiVersion: v2
+    appVersion: 1.6.4
+    created: "2023-04-19T12:52:29.2673812+02:00"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 2.x.x
+    description: NGINX Ingress Controller is an Ingress controller that manages external
+      access to HTTP services in a Kubernetes cluster using NGINX.
+    digest: e0f100970b7df82ec47ddddf77a6cc79187ac9836c8ded3087fa1af19e6947a1
+    home: https://github.com/bitnami/charts/tree/main/bitnami/nginx-ingress-controller
+    icon: https://bitnami.com/assets/stacks/nginx-ingress-controller/img/nginx-ingress-controller-stack-220x234.png
+    keywords:
+    - ingress
+    - nginx
+    - http
+    - web
+    - www
+    - reverse proxy
+    kubeVersion: '>= 1.20.0-0'
+    maintainers:
+    - name: Bitnami
+      url: https://github.com/bitnami/charts
+    name: nginx-ingress-controller
+    sources:
+    - https://github.com/bitnami/containers/tree/main/bitnami/nginx-ingress-controller
+    - https://github.com/kubernetes/ingress-nginx
+    urls:
+    - nginx-ingress-controller-9.3.32.tgz
+    version: 9.3.32
+  nuxeo:
+  - apiVersion: v2
+    created: "2023-04-19T12:52:29.2679344+02:00"
+    digest: cd804ea5ad48e8a5a12900934a3fbb8f528a3e5ff362742d3e958976379f82ee
+    name: nuxeo
+    urls:
+    - nuxeo-1.0.0.tgz
+    version: 1.0.0
+  openfaas:
+  - apiVersion: v2
+    created: "2023-04-19T12:52:29.2701195+02:00"
+    description: OpenFaaS - Serverless Functions Made Simple
+    digest: 7f02dac5315c9c36b4b392e8d93202312db6553aea1a8d5887ba725f29440bff
+    home: https://www.openfaas.com
+    icon: https://raw.githubusercontent.com/openfaas/media/master/OpenFaaS_logo_stacked_opaque.png
+    keywords:
+    - serverless
+    - functions
+    - platform
+    - faas
+    maintainers:
+    - email: alex@openfaas.com
+      name: alexellis
+    - email: han@openfaas.com
+      name: welteki
+    - email: roesler.lucas@gmail.com
+      name: lucasroesler
+    name: openfaas
+    sources:
+    - https://github.com/openfaas/faas
+    - https://github.com/openfaas/faas-netes
+    type: application
+    urls:
+    - openfaas-12.0.2.tgz
+    version: 12.0.2
+  redis:
+  - annotations:
+      category: Database
+      licenses: Apache-2.0
+    apiVersion: v2
+    appVersion: 7.0.9
+    created: "2023-04-19T12:52:29.2767952+02:00"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 2.x.x
+    description: Redis(R) is an open source, advanced key-value store. It is often
+      referred to as a data structure server since keys can contain strings, hashes,
+      lists, sets and sorted sets.
+    digest: c29fb183b1db95116672104b0feb1afc5e30cda3733d39529171ba8d95ddc335
+    home: https://github.com/bitnami/charts/tree/main/bitnami/redis
+    icon: https://bitnami.com/assets/stacks/redis/img/redis-stack-220x234.png
+    keywords:
+    - redis
+    - keyvalue
+    - database
+    maintainers:
+    - name: Bitnami
+      url: https://github.com/bitnami/charts
+    name: redis
+    sources:
+    - https://github.com/bitnami/containers/tree/main/bitnami/redis
+    urls:
+    - redis-17.8.5.tgz
+    version: 17.8.5
+  vault:
+  - annotations:
+      charts.openshift.io/name: HashiCorp Vault
+    apiVersion: v2
+    appVersion: 1.13.1
+    created: "2023-04-19T12:52:29.279969+02:00"
+    description: Official HashiCorp Vault Chart
+    digest: 5653a5b570a41d173441a62d1b4212913455e50d14c72c7f12b044c89c032f7d
+    home: https://www.vaultproject.io
+    icon: https://github.com/hashicorp/vault/raw/f22d202cde2018f9455dec755118a9b84586e082/Vault_PrimaryLogo_Black.png
+    keywords:
+    - vault
+    - security
+    - encryption
+    - secrets
+    - management
+    - automation
+    - infrastructure
+    kubeVersion: '>= 1.22.0-0'
+    name: vault
+    sources:
+    - https://github.com/hashicorp/vault
+    - https://github.com/hashicorp/vault-helm
+    - https://github.com/hashicorp/vault-k8s
+    - https://github.com/hashicorp/vault-csi-provider
+    urls:
+    - vault-0.24.0.tgz
+    version: 0.24.0
+generated: "2023-04-19T12:52:29.2410048+02:00"

@@ -1,0 +1,26 @@
+---
+apiVersion: v2
+appVersion: 2.387.1
+dependencies:
+  - name: common
+    repository: https://charts.bitnami.com/bitnami
+    tags:
+      - bitnami-common
+    version: 2.x.x
+description: Jenkins is an open source Continuous Integration and Continuous Delivery (CICD) server designed to automate the building, testing, and deploying of any software project.
+home: httpsgithub.combitnamichartstreemainbitnamijenkins
+icon: httpsbitnami.comassetsstacksjenkinsimgjenkins-stack-220x234.png
+keywords:
+  - jenkins
+  - ci
+  - cd
+  - http
+  - web
+  - application
+maintainers:
+  - name: Bitnami
+name: jenkins
+sources:
+  - httpsgithub.combitnamicontainerstreemainbitnamijenkins
+  - httpsjenkins.io
+version: 12.0.1

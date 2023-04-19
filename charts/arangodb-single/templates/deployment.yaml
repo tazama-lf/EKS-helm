@@ -1,0 +1,39 @@
+# file: deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: arango
+  namespace: development
+  labels:
+    app.kubernetes.io/instance: arango
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: arango
+spec:
+  replicas: {{ .Values.arangodb.replicas }}
+  selector:
+    matchLabels:
+      app: arangodb
+  template:
+    metadata:
+      labels:
+        app: arangodb
+    spec:
+      containers:
+        - name: arangodb
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: ARANGO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: arangodb
+                  key: root-password
+          ports:
+            - containerPort: {{ .Values.arangodb.single.servicePort }}
+          volumeMounts:
+            - name: arango-data
+              mountPath: /var/lib/arangodb3
+      volumes:
+        - name: arango-data
+          persistentVolumeClaim:
+            claimName: arangodb-pvc

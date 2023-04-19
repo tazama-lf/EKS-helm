@@ -1,0 +1,17 @@
+# file: pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: arangodb-pvc
+  namespace: development
+  labels:
+    app.kubernetes.io/instance: arango
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: arango
+spec:
+  storageClassName: {{ .Values.arangodb.storage.class }}
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.arangodb.storage.size }}

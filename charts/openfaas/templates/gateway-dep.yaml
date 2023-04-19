@@ -1,0 +1,323 @@
+{{- $functionNs := default .Release.Namespace .Values.functionNamespace }}
+{{- $providerReadTimeout :=  default .Values.gateway.readTimeout .Values.faasnetes.readTimeout }}
+{{- $providerWriteTimeout :=  default .Values.gateway.writeTimeout .Values.faasnetes.writeTimeout }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: {{ template "openfaas.name" . }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    component: gateway
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
+  name: gateway
+  namespace: openfaas
+spec:
+  replicas: {{ .Values.gateway.replicas }}
+  selector:
+    matchLabels:
+      app: gateway
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8082"
+      labels:
+        app: gateway
+    spec:
+      {{- if .Values.operator.create }}
+      serviceAccountName: {{ .Release.Name }}-operator
+      {{- else }}
+      serviceAccountName: {{ .Release.Name }}-controller
+      {{- end }}
+      volumes:
+      - name: faas-netes-temp-volume
+        emptyDir: {}
+      {{- if .Values.basic_auth }}
+      - name: auth
+        secret:
+          secretName: basic-auth
+      {{- end }}
+      {{- if .Values.openfaasPro }}
+      - name: license
+        secret:
+          secretName: openfaas-license
+      {{- end }}
+      containers:
+      - name: gateway
+        resources:
+          {{- .Values.gateway.resources | toYaml | nindent 12 }}
+        {{- if .Values.openfaasPro }}
+        image: {{ .Values.gatewayPro.image }}
+        {{- else }}
+        image: {{ .Values.gateway.image }}
+        {{- end }}
+        imagePullPolicy: {{ .Values.openfaasImagePullPolicy }}
+        command:
+          - ./gateway
+        {{- if .Values.openfaasPro }}
+          - "-license-file=/var/secrets/license/license"
+        {{- end }}
+        {{- if .Values.securityContext }}
+        securityContext:
+          readOnlyRootFilesystem: true
+          runAsUser: 10001
+        {{- end }}
+        livenessProbe:
+          {{- if $.Values.gateway.livenessProbe }}
+          initialDelaySeconds: {{ $.Values.gateway.livenessProbe.initialDelaySeconds | default 0 }}
+          periodSeconds: {{ $.Values.gateway.livenessProbe.periodSeconds | default 10 }}
+          timeoutSeconds: {{ $.Values.gateway.livenessProbe.timeoutSeconds | default 5 }}
+          failureThreshold: {{ $.Values.gateway.livenessProbe.failureThreshold | default 3 }}
+          successThreshold: {{ $.Values.gateway.livenessProbe.successThreshold | default 1 }}
+          {{- end }}
+          {{- if .Values.httpProbe }}
+          httpGet:
+            path: /healthz
+            port: 8080
+          {{- else }}
+          exec:
+            command:
+            - wget
+            - --quiet
+            - --tries=1
+            - --timeout=5
+            - --spider
+            - http://localhost:8080/healthz
+          {{- end }}
+        readinessProbe:
+          {{- if $.Values.gateway.readinessProbe }}
+          initialDelaySeconds: {{ $.Values.gateway.readinessProbe.initialDelaySeconds | default 0 }}
+          periodSeconds: {{ $.Values.gateway.readinessProbe.periodSeconds | default 10 }}
+          timeoutSeconds: {{ $.Values.gateway.readinessProbe.timeoutSeconds | default 5 }}
+          failureThreshold: {{ $.Values.gateway.readinessProbe.failureThreshold | default 3 }}
+          successThreshold: {{ $.Values.gateway.readinessProbe.successThreshold | default 1 }}
+          {{- end }}
+          {{- if .Values.httpProbe }}
+          httpGet:
+            path: /healthz
+            port: 8080
+          {{- else }}
+          exec:
+            command:
+            - wget
+            - --quiet
+            - --tries=1
+            - --timeout=5
+            - --spider
+            - http://localhost:8080/healthz
+          {{- end }}
+        env:
+        {{- if .Values.gateway.logsProviderURL }}
+        - name: logs_provider_url
+          value: "{{ .Values.gateway.logsProviderURL }}"
+        {{- end }}
+        - name: read_timeout
+          value: "{{ .Values.gateway.readTimeout }}"
+        - name: write_timeout
+          value: "{{ .Values.gateway.writeTimeout }}"
+        - name: upstream_timeout
+          value: "{{ .Values.gateway.upstreamTimeout }}"
+        - name: functions_provider_url
+          value: "http://127.0.0.1:8081/"
+        - name: direct_functions
+        {{- if .Values.gateway.directFunctions }}
+          value: "{{.Values.gateway.directFunctions}}"
+        {{- else}}
+          value: "false"
+        {{- end }}
+        - name: direct_functions_suffix
+          value: "{{ $functionNs }}.svc.{{ .Values.kubernetesDNSDomain }}"
+        - name: function_namespace
+          value: {{ $functionNs | quote }}
+        {{- if .Values.nats.external.enabled }}
+        - name: faas_nats_address
+          value: "{{ .Values.nats.external.host }}"
+        - name: faas_nats_port
+          value: "{{ .Values.nats.external.port }}"
+        - name: faas_nats_cluster_name
+          value: "{{ .Values.nats.external.clusterName }}"
+        - name: faas_nats_channel
+          value: "{{ .Values.nats.channel }}"
+        {{- else }}
+        {{- if .Values.async }}
+        - name: faas_nats_address
+          value: "nats.openfaas.svc.{{ .Values.kubernetesDNSDomain }}"
+        - name: faas_nats_port
+          value: "4222"
+        - name: faas_nats_channel
+          value: "{{ .Values.nats.channel }}"
+        {{- end }}
+        {{- end }}
+        {{- if eq .Values.queueMode "jetstream" }}
+        - name: nats_jetstream
+          value: "true"
+        {{- end }}
+        {{- if .Values.basic_auth }}
+        - name: basic_auth
+          value: "true"
+        - name: secret_mount_path
+          value: "/var/secrets"
+        {{- if .Values.oidcAuthPlugin.enabled }}
+        - name: auth_proxy_url
+          value: "http://oidc-plugin.openfaas:8080/validate"
+        - name: auth_pass_body
+          value: "false"
+        {{- end }}
+        {{- end }}
+        - name: scale_from_zero
+          value: "{{ .Values.gateway.scaleFromZero }}"
+        - name: max_idle_conns
+          value: "{{ .Values.gateway.maxIdleConns }}"
+        - name: max_idle_conns_per_host
+          value: "{{ .Values.gateway.maxIdleConnsPerHost }}"
+        - name: probe_functions
+          value: "{{ .Values.gateway.probeFunctions }}"
+        volumeMounts:
+        {{- if .Values.basic_auth }}
+        - name: auth
+          readOnly: true
+          mountPath: "/var/secrets"
+        {{- end }}
+        {{- if .Values.openfaasPro }}
+        - name: license
+          readOnly: true
+          mountPath: "/var/secrets/license"
+        {{- end }}
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+      {{- if .Values.operator.create }}
+      - name: operator
+        resources:
+          {{- .Values.operator.resources | toYaml | nindent 12 }}
+      {{- if .Values.openfaasPro }}
+        image: {{ .Values.operatorPro.image }}
+      {{- else }}
+        image: {{ .Values.operator.image }}
+      {{- end }}
+        imagePullPolicy: {{ .Values.openfaasImagePullPolicy }}
+        command:
+          - ./faas-netes
+          - -operator=true
+        {{- if .Values.openfaasPro }}
+          - "-license-file=/var/secrets/license/license"
+        {{- end }}
+        env:
+          - name: port
+            value: "8081"
+          - name: function_namespace
+            value: {{ $functionNs | quote }}
+          - name: profiles_namespace
+            value: openfaas
+          - name: read_timeout
+            value: "{{ $providerReadTimeout }}"
+          - name: write_timeout
+            value: "{{ $providerWriteTimeout }}"
+          - name: image_pull_policy
+            value: {{ .Values.faasnetes.imagePullPolicy | quote }}
+          - name: http_probe
+            value: "{{ .Values.faasnetes.httpProbe }}"
+          - name: set_nonroot_user
+            value: "{{ .Values.faasnetes.setNonRootUser }}"
+          - name: readiness_probe_initial_delay_seconds
+            value: "{{ .Values.faasnetes.readinessProbe.initialDelaySeconds }}"
+          - name: readiness_probe_timeout_seconds
+            value: "{{ .Values.faasnetes.readinessProbe.timeoutSeconds }}"
+          - name: readiness_probe_period_seconds
+            value: "{{ .Values.faasnetes.readinessProbe.periodSeconds }}"
+          - name: liveness_probe_initial_delay_seconds
+            value: "{{ .Values.faasnetes.livenessProbe.initialDelaySeconds }}"
+          - name: liveness_probe_timeout_seconds
+            value: "{{ .Values.faasnetes.livenessProbe.timeoutSeconds }}"
+          - name: liveness_probe_period_seconds
+            value: "{{ .Values.faasnetes.livenessProbe.periodSeconds }}"
+          - name: cluster_role
+            value: "{{ .Values.clusterRole }}"
+        ports:
+        - containerPort: 8081
+          protocol: TCP
+        {{- if .Values.openfaasPro }}
+        volumeMounts:
+        - name: license
+          readOnly: true
+          mountPath: "/var/secrets/license"
+        {{- end }}
+
+      {{- else }}
+      - name: faas-netes
+        resources:
+          {{- .Values.faasnetes.resources | toYaml | nindent 12 }}
+      {{- if .Values.openfaasPro }}
+        image: {{ .Values.faasnetesPro.image }}
+      {{- else }}
+        image: {{ .Values.faasnetes.image }}
+      {{- end }}
+        imagePullPolicy: {{ .Values.openfaasImagePullPolicy }}
+        {{- if .Values.securityContext }}
+        securityContext:
+          readOnlyRootFilesystem: true
+          runAsUser: 10001
+        {{- end }}
+        command:
+          - ./faas-netes
+          - -operator=false
+        {{- if .Values.openfaasPro }}
+          - "-license-file=/var/secrets/license/license"
+        {{- end }}
+        env:
+        - name: port
+          value: "8081"
+        - name: function_namespace
+          value: {{ $functionNs | quote }}
+        - name: read_timeout
+          value: "{{ $providerReadTimeout }}"
+        - name: profiles_namespace
+          value: openfaas
+        - name: write_timeout
+          value: "{{ $providerWriteTimeout }}"
+        - name: image_pull_policy
+          value: {{ .Values.faasnetes.imagePullPolicy | quote }}
+        - name: http_probe
+          value: "{{ .Values.faasnetes.httpProbe }}"
+        - name: set_nonroot_user
+          value: "{{ .Values.faasnetes.setNonRootUser }}"
+        - name: readiness_probe_initial_delay_seconds
+          value: "{{ .Values.faasnetes.readinessProbe.initialDelaySeconds }}"
+        - name: readiness_probe_timeout_seconds
+          value: "{{ .Values.faasnetes.readinessProbe.timeoutSeconds }}"
+        - name: readiness_probe_period_seconds
+          value: "{{ .Values.faasnetes.readinessProbe.periodSeconds }}"
+        - name: liveness_probe_initial_delay_seconds
+          value: "{{ .Values.faasnetes.livenessProbe.initialDelaySeconds }}"
+        - name: liveness_probe_timeout_seconds
+          value: "{{ .Values.faasnetes.livenessProbe.timeoutSeconds }}"
+        - name: liveness_probe_period_seconds
+          value: "{{ .Values.faasnetes.livenessProbe.periodSeconds }}"
+        - name: cluster_role
+          value: "{{ .Values.clusterRole }}"
+        volumeMounts:
+        {{- if .Values.openfaasPro }}
+        - name: license
+          readOnly: true
+          mountPath: "/var/secrets/license"
+        {{- end }}
+        - mountPath: /tmp
+          name: faas-netes-temp-volume
+        ports:
+        - containerPort: 8081
+          protocol: TCP
+      {{- end }}
+    {{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+    {{- end }}

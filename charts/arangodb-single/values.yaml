@@ -1,0 +1,18 @@
+# file: values.yaml
+image:
+  repository: arangodb/arangodb
+  tag: latest
+arangodb:
+  storage:
+    size: 50Gi
+    class: gp2
+  authentication:
+    rootPassword: mysecretpassword
+  serviceType: ClusterIP
+  replicas: 1
+  single:
+    enabled: true
+    imagePullPolicy: IfNotPresent
+    image: arangodb/arangodb
+    version: latest
+    servicePort: 8529

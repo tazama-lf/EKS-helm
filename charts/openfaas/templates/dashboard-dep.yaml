@@ -1,0 +1,105 @@
+{{- if  .Values.dashboard.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: {{ template "openfaas.name" . }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    component: dashboard
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
+  name: dashboard
+  namespace: openfaas
+spec:
+  replicas: {{ .Values.dashboard.replicas }}
+  selector:
+    matchLabels:
+      app: dashboard
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: "false"
+      labels:
+        app: dashboard
+    spec:
+      volumes:
+      {{- if .Values.basic_auth }}
+      - name: auth
+        secret:
+          secretName: basic-auth
+      {{- end }}
+
+      - name: license
+        secret:
+          secretName: openfaas-license
+      {{- if .Values.dashboard.signingKeySecret }}
+      - name: dashboard-jwt
+        secret:
+          secretName: {{ .Values.dashboard.signingKeySecret }}
+      {{- end }}
+      containers:
+      - name:  dashboard
+        resources:
+          {{- .Values.dashboard.resources | toYaml | nindent 12 }}
+        image: {{ .Values.dashboard.image }}
+        imagePullPolicy: {{ .Values.openfaasImagePullPolicy }}
+
+        command:
+          - "./server"
+        args:
+          - "-license-file=/var/secrets/license/license"
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        env:
+
+        - name: base_href
+          value: /function/dashboard/
+      {{- if .Values.basic_auth }}
+        - name: basic_auth
+          value: "true"
+        - name: secret_mount_path
+          value: /var/secrets/gateway
+      {{- end }}
+        - name: gateway_url
+          value: "http://gateway.openfaas:8080/"
+        - name: metrics_window
+          value: 60m
+        - name: prometheus_host
+          value: "prometheus.openfaas
+        - name: prometheus_port
+          value: "9090"
+        - name: public_url
+          value: {{ .Values.dashboard.publicURL }}
+        - name: jwt_mount_path
+          value: /var/secrets/dashboard-jwt
+
+        volumeMounts:
+        {{- if .Values.basic_auth }}
+        - name: auth
+          readOnly: true
+          mountPath: "/var/secrets/gateway"
+        {{- end }}
+        - name: license
+          readOnly: true
+          mountPath: "/var/secrets/license"
+        {{- if .Values.dashboard.signingKeySecret }}
+        - name: dashboard-jwt
+          readOnly: true
+          mountPath: "/var/secrets/dashboard-jwt"
+        {{- end }}
+
+    {{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+{{- end }}

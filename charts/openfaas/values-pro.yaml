@@ -1,0 +1,68 @@
+# Suggested additional overrides for OpenFaaS Pro users, 
+# in addition to (not instead of) values.yaml
+
+# Initial configuration to set Pro configurations on
+openfaasPro: true
+
+# Recommended operating mode for the OpenFaaS controller aka "faas-netes"
+# is operator mode, including a CustomResource for functions.
+#
+# The operator mode is required for GitOps tooling like ArgoCD / Flux v2
+# and to export existing functions for backup purposes. 
+operator:
+  create: true
+
+# Enable authentication on all OpenFaaS core components.
+# You must not turn off basic_auth for the chart, however, you can pre-create the 
+# secret, if you're using a GitOps tool to create a stable secret
+# before installing OpenFaaS Pro via this chart
+generateBasicAuth: true
+
+# Follow docs at: https://docs.openfaas.com/openfaas-pro/dashboard/
+# for setting up the new dashboard
+dashboard:
+  publicURL: localhost
+  enabled: true
+
+# The autoscaler is enabled by default
+# Learn more: 
+# https://docs.openfaas.com/architecture/autoscaling/
+autoscaler:
+  enabled: true
+
+# A cluster role is required for OpenFaaS Pro due to:
+# 1) Autoscaling and metrics for functions - CPU / RAM
+# 2) Multiple namespace support
+# https://docs.openfaas.com/reference/namespaces/
+clusterRole: true
+
+# HPA CPU? 3 <=> 6
+# If you have purchased licenses for 6 gateway replicas for this environment
+# you can create a HPA rule to scale on CPU, but you must not scale beyond
+# what's been purchased.
+gateway:
+  replicas: 3
+# Required gateway configuration for Istio
+  # directFunctions: true
+  # probeFunctions: true
+
+# replicas x maxInflight = max concurrent messages processed.
+# 75 concurrent requests will be processed, 25 per queueWorker
+queueWorker:
+  replicas: 3
+
+queueWorkerPro:
+  maxInflight: 50
+
+# Enable JetStream for OpenFaaS, learn more at:
+# https://www.openfaas.com/blog/jetstream-for-openfaas/
+queueMode: jetstream
+
+# Set stream replication factor.
+# For production a value of at least 3 is recommended for NATS JetStream to be resilient.
+# See https://github.com/openfaas/openfaas-pro/blob/master/jetstream.md
+nats:
+  streamReplication: 1
+
+ # For timeouts longer than 60 seconds see:
+ # https://docs.openfaas.com/tutorials/expanded-timeouts/

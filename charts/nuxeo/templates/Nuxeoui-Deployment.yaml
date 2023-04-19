@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nuxeo-ui
+  namespace: development
+  uid: 9fd17f2a-d7b9-4ded-8c27-8c5bbd7b6539
+  resourceVersion: '9742648'
+  generation: 4
+  creationTimestamp: '2022-11-29T16:11:56Z'
+  labels:
+    k8s-app: nuxeo-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: nuxeo-ui
+  template:
+    metadata:
+      labels:
+        k8s-app: nuxeo-ui
+    spec:
+      volumes:
+        - name: nuxeo-config-web
+          configMap:
+            name: nuxeo-config-web
+            defaultMode: 420
+      containers:
+        - name: nuxeo-ui
+          image: actio.azurecr.io/nuxeoui:latest
+          ports:
+            - containerPort: 5000
+              protocol: TCP
+          resources: {}
+          volumeMounts:
+            - name: nuxeo-config-web
+              mountPath: /ui/webpack.config.js
+              subPath: webpack.config.js
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          imagePullPolicy: Always
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      securityContext: {}
+      imagePullSecrets:
+        - name: frmpullsecret
+      schedulerName: default-scheduler
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600

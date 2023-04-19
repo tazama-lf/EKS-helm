@@ -1,0 +1,8 @@
+---
+
+replicas: 1
+imagePullPolicy: Always
+image: nginx:1.16.1-alpine
+arango:
+  arangoDeploymentName: arango
+

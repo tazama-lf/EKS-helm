@@ -1,0 +1,22 @@
+{{- $functionNs := default .Release.Namespace .Values.functionNamespace }}
+{{- if .Values.istio.mtls -}}
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: openfaas
+spec:
+  mtls:
+    mode: STRICT
+{{- if ne .Release.Namespace $functionNs }}
+---
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace:  {{ $functionNs }}
+spec:
+  mtls:
+    mode: STRICT
+{{- end }}
+{{- end }}

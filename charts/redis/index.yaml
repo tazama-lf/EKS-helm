@@ -1,0 +1,13 @@
+serverInfo:
+    contextPath: /v1/helm
+apiVersion: v1
+entries:
+    redis:
+    - apiVersion: v2
+      appVersion: "1.0"
+      description: A Helm chart for redis
+      name: redis
+      version: 7.0.9
+      urls:
+      - https://github.com/frmscoe/helm/tree/main/redis
+generated: "2023-04-02T19:24:40.5121566+02:00"
