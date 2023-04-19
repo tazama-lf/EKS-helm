@@ -57,3 +57,6 @@ dependencies:
   - name: nuxeo
     version: 1.0.0
     repository: charts/nuxeo-1.0.0.tgz
+  - name: infra-chart
+    version: 1.0.0
+    repository: charts/infra-chart-1.0.0.tgz

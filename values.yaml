@@ -78,3 +78,9 @@ nuxeo:
   image:
     repository: charts/nuxeo-1.0.0.tgz
     tag: 1.0.0
+
+infra-chart:
+  enabled: true
+  image:
+    repository: charts/infra-chart-1.0.0.tgz
+    tag: 1.0.0
