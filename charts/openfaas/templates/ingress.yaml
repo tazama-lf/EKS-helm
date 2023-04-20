@@ -33,7 +33,6 @@ spec:
                 name: {{ $host.serviceName }}
                 port:
                   number: {{ $host.servicePort }}
-    {{- end }}
     {{- end -}}
   {{- if .Values.ingress.tls }}
   tls:
