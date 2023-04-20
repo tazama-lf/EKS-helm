@@ -2,7 +2,7 @@
   {{- $apiIsStable := eq (include "openfaas.ingress.isStable" .) "true" -}}
   {{- $pathType := .Values.ingress.pathType | default "ImplementationSpecific" -}}
   {{- $ingressSupportsPathType := eq (include "openfaas.ingress.supportsPathType" .) "true" -}}
-apiVersion: {{ include "openfaas.ingress.apiVersion" . }}
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: {{ template "openfaas.name" . }}-ingress
