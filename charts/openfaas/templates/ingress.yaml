@@ -25,9 +25,7 @@ spec:
       http:
         paths:
           - path: {{ $host.path }}
-            {{- if and $pathType $ingressSupportsPathType }}
-            pathType: {{ $pathType }}
-            {{- end }}
+            pathType: ImplementationSpecific
             backend:
               service:
                 name: {{ $host.serviceName }}
