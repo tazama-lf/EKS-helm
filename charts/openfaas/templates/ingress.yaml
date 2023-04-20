@@ -1,5 +1,4 @@
 {{- if .Values.ingress.enabled -}}
-  {{- $apiIsStable := "true" -}}
   {{- $pathType := .Values.ingress.pathType | default "ImplementationSpecific" -}}
   {{- $ingressSupportsPathType := eq (include "openfaas.ingress.supportsPathType" .) "true" -}}
 apiVersion: networking.k8s.io/v1
@@ -30,14 +29,10 @@ spec:
             pathType: {{ $pathType }}
             {{- end }}
             backend:
-              {{- if $apiIsStable }}
               service:
                 name: {{ $host.serviceName }}
                 port:
                   number: {{ $host.servicePort }}
-              {{- else }}
-              serviceName: {{ $host.serviceName }}
-              servicePort: {{ $host.servicePort }}
     {{- end }}
     {{- end -}}
   {{- if .Values.ingress.tls }}
