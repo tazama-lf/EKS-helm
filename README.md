@@ -1,7 +1,7 @@
 # helm
 All the helm charts for running the FRMS platform
 
-link to deployment documentation - https://frmscoe.atlassian.net/wiki/spaces/FRMS/pages/1741808/FRMS+Deployment+Guide
+link to deployment documentation - https://frmscoe.atlassian.net/wiki/spaces/FRMS/pages/40566785/FRMS+EKS+Deployment+Guide
 
 Step 1 : Helm charts 
 In this section we will be running through the initial setup of FRMS on a cluster. A helm subchart will be used to install multiple setups for all the different helm files based in one subchart for easier installation, these will include services , ingresses , pods, replicate-sets etc… 
