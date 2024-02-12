@@ -4,17 +4,41 @@ apmConfig:
   apm-server.yml: |
     apm-server:
       host: "0.0.0.0:8200"
-
-    queue: {}
-
+      kibana:
+       enabled: true
+       host: "http://kibana-kibana:5601"
+       ssl.certificate_authorities: "/usr/share/apm-server/config/certs/ca.crt"
+       ssl.certificate: "/usr/share/apm-server/config/certs/tls.crt"
+       ssl.key: "/usr/share/apm-server/config/certs/tls.key"
+       username: "${ELASTICSEARCH_USERNAME}"
+       password: "${ELASTICSEARCH_PASSWORD}"
+      rum:
+       enabled: true
+       event_rate:
+        limit: 3000
+      queue: {}
     output.elasticsearch:
-      hosts: ["http://elasticsearch-master:9200"]
-      username: "${ELASTICSEARCH_USERNAME}"
-      password: "${ELASTICSEARCH_PASSWORD}"
-      ## If SSL is enabled
-      # protocol: https
-      # ssl.certificate_authorities:
-      #  - /usr/share/apm-server/config/certs/elastic-ca.pem
+     hosts: ["https://elasticsearch-master:9200"]
+     username: "${ELASTICSEARCH_USERNAME}"
+     password: "${ELASTICSEARCH_PASSWORD}"
+     ## If SSL is enabled
+     protocol: https
+     ssl.certificate_authorities: "/usr/share/apm-server/config/certs/ca.crt"
+     ssl.certificate: "/usr/share/apm-server/config/certs/tls.crt"
+     ssl.key: "/usr/share/apm-server/config/certs/tls.key"
+     indices:
+      - index: "apm-%{[beat.version]}-sourcemap"
+        when.contains:
+         processor.event: "sourcemap"
+      - index: "apm-%{[beat.version]}-error-%{+yyyy.MM.dd}"
+        when.contains:
+         processor.event: "error"
+      - index: "apm-%{[beat.version]}-transaction-%{+yyyy.MM.dd}"
+        when.contains:
+         processor.event: "transaction"
+      - index: "apm-%{[beat.version]}-span-%{+yyyy.MM.dd}"
+        when.contains:
+         processor.event: "span"
 
 replicas: 1
 
@@ -124,10 +148,11 @@ serviceAccountAnnotations: {}
 # eks.amazonaws.com/role-arn: arn:aws:iam::111111111111:role/k8s.clustername.namespace.serviceaccount
 
 # A list of secrets and their paths to mount inside the pod
-secretMounts: []
-#  - name: elastic-certificate-pem
-#    secretName: elastic-certificates
-#    path: /usr/share/apm-server/config/certs
+secretMounts:
+  - name: elasticsearch-master-certs
+    secretName: elasticsearch-master-certs
+    path: /usr/share/apm-server/config/certs
+
 
 terminationGracePeriod: 30
 

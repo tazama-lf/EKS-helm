@@ -1,13 +1,15 @@
+{{- /*
+Copyright VMware, Inc.
+SPDX-License-Identifier: APACHE-2.0
+*/}}
+
 apiVersion: {{ include "common.capabilities.statefulset.apiVersion" . }}
 kind: StatefulSet
 metadata:
   name: {{ template "common.names.fullname" . }}
   namespace: {{ include "common.names.namespace" . | quote }}
-  labels: {{- include "common.labels.standard" . | nindent 4 }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
     app.kubernetes.io/component: keycloak
-    {{- if .Values.commonLabels }}
-    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
-    {{- end }}
   {{- if .Values.commonAnnotations }}
   annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
   {{- end }}
@@ -19,8 +21,9 @@ spec:
   serviceName: {{ printf "%s-headless" (include "common.names.fullname" .) | trunc 63 | trimSuffix "-" }}
   updateStrategy:
     {{- include "common.tplvalues.render" (dict "value" .Values.updateStrategy "context" $ ) | nindent 4 }}
+  {{- $podLabels := include "common.tplvalues.merge" ( dict "values" ( list .Values.podLabels .Values.commonLabels ) "context" . ) }}
   selector:
-    matchLabels: {{ include "common.labels.matchLabels" . | nindent 6 }}
+    matchLabels: {{- include "common.labels.matchLabels" ( dict "customLabels" $podLabels "context" $ ) | nindent 6 }}
       app.kubernetes.io/component: keycloak
   template:
     metadata:
@@ -35,11 +38,8 @@ spec:
         {{- if .Values.podAnnotations }}
         {{- include "common.tplvalues.render" (dict "value" .Values.podAnnotations "context" $) | nindent 8 }}
         {{- end }}
-      labels: {{- include "common.labels.standard" . | nindent 8 }}
+      labels: {{- include "common.labels.standard" ( dict "customLabels" $podLabels "context" $ ) | nindent 8 }}
         app.kubernetes.io/component: keycloak
-        {{- if .Values.podLabels }}
-        {{- include "common.tplvalues.render" (dict "value" .Values.podLabels "context" $) | nindent 8 }}
-        {{- end }}
     spec:
       serviceAccountName: {{ template "keycloak.serviceAccountName" . }}
       {{- include "keycloak.imagePullSecrets" . | nindent 6 }}
@@ -50,8 +50,8 @@ spec:
       affinity: {{- include "common.tplvalues.render" ( dict "value" .Values.affinity "context" $) | nindent 8 }}
       {{- else }}
       affinity:
-        podAffinity: {{- include "common.affinities.pods" (dict "type" .Values.podAffinityPreset "context" $) | nindent 10 }}
-        podAntiAffinity: {{- include "common.affinities.pods" (dict "type" .Values.podAntiAffinityPreset "context" $) | nindent 10 }}
+        podAffinity: {{- include "common.affinities.pods" (dict "type" .Values.podAffinityPreset "customLabels" $podLabels "context" $) | nindent 10 }}
+        podAntiAffinity: {{- include "common.affinities.pods" (dict "type" .Values.podAntiAffinityPreset "customLabels" $podLabels "context" $) | nindent 10 }}
         nodeAffinity: {{- include "common.affinities.nodes" (dict "type" .Values.nodeAffinityPreset.type "key" .Values.nodeAffinityPreset.key "values" .Values.nodeAffinityPreset.values) | nindent 10 }}
       {{- end }}
       {{- if .Values.nodeSelector }}
@@ -71,6 +71,12 @@ spec:
       {{- end }}
       {{- if .Values.podSecurityContext.enabled }}
       securityContext: {{- omit .Values.podSecurityContext "enabled" | toYaml | nindent 8 }}
+      {{- end }}
+      {{- if .Values.dnsPolicy }}
+      dnsPolicy: {{ .Values.dnsPolicy }}
+      {{- end }}
+      {{- if .Values.dnsConfig }}
+      dnsConfig: {{- include "common.tplvalues.render" (dict "value" .Values.dnsConfig "context" .) | nindent 8 }}
       {{- end }}
       {{- if semverCompare ">= 1.13" (include "common.capabilities.kubeVersion" .) }}
       enableServiceLinks: {{ .Values.enableServiceLinks }}
@@ -119,7 +125,35 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: {{ include "keycloak.databaseSecretName" . }}
-                  key: {{ include "keycloak.databaseSecretKey" . }}
+                  key: {{ include "keycloak.databaseSecretPasswordKey" . }}
+            {{- if .Values.externalDatabase.existingSecretHostKey }}
+            - name: KEYCLOAK_DATABASE_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "keycloak.databaseSecretName" . }}
+                  key: {{ include "keycloak.databaseSecretHostKey" . }}
+            {{- end }}
+            {{- if .Values.externalDatabase.existingSecretPortKey }}
+            - name: KEYCLOAK_DATABASE_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "keycloak.databaseSecretName" . }}
+                  key: {{ include "keycloak.databaseSecretPortKey" . }}
+            {{- end }}
+            {{- if .Values.externalDatabase.existingSecretUserKey }}
+            - name: KEYCLOAK_DATABASE_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "keycloak.databaseSecretName" . }}
+                  key: {{ include "keycloak.databaseSecretUserKey" . }}
+            {{- end }}
+            {{- if .Values.externalDatabase.existingSecretDatabaseKey }}
+            - name: KEYCLOAK_DATABASE_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "keycloak.databaseSecretName" . }}
+                  key: {{ include "keycloak.databaseSecretDatabaseKey" . }}
+            {{- end }}
             {{- if and .Values.tls.enabled (or .Values.tls.keystorePassword .Values.tls.passwordsSecret) }}
             - name: KEYCLOAK_HTTPS_KEY_STORE_PASSWORD
               valueFrom:

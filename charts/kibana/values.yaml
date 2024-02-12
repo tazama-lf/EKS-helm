@@ -9,9 +9,9 @@ replicas: 1
 # Extra environment variables to append to this nodeGroup
 # This will be appended to the current 'env:' key. You can use any of the kubernetes env
 # syntax here
-extraEnvs:
-  - name: "NODE_OPTIONS"
-    value: "--max-old-space-size=1800"
+extraEnvs: []
+#  - name: "NODE_OPTIONS"
+#    value: "--max-old-space-size=1800"
 #  - name: MY_ENVIRONMENT_VAR
 #    value: the_value_goes_here
 
@@ -49,13 +49,7 @@ annotations: {}
 podAnnotations: {}
 # iam.amazonaws.com/role: es-cluster
 
-resources:
-  requests:
-    cpu: "1000m"
-    memory: "2Gi"
-  limits:
-    cpu: "1000m"
-    memory: "2Gi"
+resources: {}
 
 protocol: http
 

@@ -2,5 +2,4 @@ namespaces:
   - name: cicd
   - name: development
   - name: ingress-nginx
-  - name: openfaas
-  - name: openfaas-fn
+  - name: processor

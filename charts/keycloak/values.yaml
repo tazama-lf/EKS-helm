@@ -1,3 +1,6 @@
+# Copyright VMware, Inc.
+# SPDX-License-Identifier: APACHE-2.0
+
 ## @section Global parameters
 ## Global Docker image parameters
 ## Please, note that this will override the image parameters, including dependencies, configured to use the global value
@@ -31,7 +34,7 @@ nameOverride: ""
 fullnameOverride: ""
 ## @param namespaceOverride String to fully override common.names.namespace
 ##
-namespaceOverride: "development"
+namespaceOverride: ""
 ## @param commonLabels Labels to add to all deployed objects
 ##
 commonLabels: {}
@@ -42,6 +45,19 @@ enableServiceLinks: true
 ## @param commonAnnotations Annotations to add to all deployed objects
 ##
 commonAnnotations: {}
+## @param dnsPolicy DNS Policy for pod
+## ref: https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/
+## E.g.
+## dnsPolicy: ClusterFirst
+dnsPolicy: ""
+## @param dnsConfig DNS Configuration pod
+## ref: https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/
+## E.g.
+## dnsConfig:
+##   options:
+##   - name: ndots
+##     value: "4"
+dnsConfig: {}
 ## @param clusterDomain Default Kubernetes cluster domain
 ##
 clusterDomain: cluster.local
@@ -67,9 +83,9 @@ diagnosticMode:
 
 ## Bitnami Keycloak image version
 ## ref: https://hub.docker.com/r/bitnami/keycloak/tags/
-## @param image.registry Keycloak image registry
-## @param image.repository Keycloak image repository
-## @param image.tag Keycloak image tag (immutable tags are recommended)
+## @param image.registry [default: REGISTRY_NAME] Keycloak image registry
+## @param image.repository [default: REPOSITORY_NAME/keycloak] Keycloak image repository
+## @skip image.tag Keycloak image tag (immutable tags are recommended)
 ## @param image.digest Keycloak image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag
 ## @param image.pullPolicy Keycloak image pull policy
 ## @param image.pullSecrets Specify docker-registry secret names as an array
@@ -78,7 +94,7 @@ diagnosticMode:
 image:
   registry: docker.io
   repository: bitnami/keycloak
-  tag: 21.0.2-debian-11-r0
+  tag: 23.0.3-debian-11-r0
   digest: ""
   ## Specify a imagePullPolicy
   ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
@@ -112,6 +128,9 @@ auth:
   ## @param auth.passwordSecretKey Key where the Keycloak admin password is being stored inside the existing secret.
   ##
   passwordSecretKey: ""
+  ## @param auth.annotations Additional custom annotations for Keycloak auth secret object
+  ##
+  annotations: {}
 
 ## HTTPS settings
 ## ref: https://github.com/bitnami/containers/tree/main/bitnami/keycloak#tls-encryption
@@ -269,14 +288,26 @@ podSecurityContext:
   fsGroup: 1001
 ## Keycloak containers' Security Context
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
-## @param containerSecurityContext.enabled Enabled Keycloak containers' Security Context
-## @param containerSecurityContext.runAsUser Set Keycloak container's Security Context runAsUser
-## @param containerSecurityContext.runAsNonRoot Set Keycloak container's Security Context runAsNonRoot
+## @param containerSecurityContext.enabled Enabled containers' Security Context
+## @param containerSecurityContext.runAsUser Set containers' Security Context runAsUser
+## @param containerSecurityContext.runAsNonRoot Set container's Security Context runAsNonRoot
+## @param containerSecurityContext.privileged Set container's Security Context privileged
+## @param containerSecurityContext.readOnlyRootFilesystem Set container's Security Context readOnlyRootFilesystem
+## @param containerSecurityContext.allowPrivilegeEscalation Set container's Security Context allowPrivilegeEscalation
+## @param containerSecurityContext.capabilities.drop List of capabilities to be dropped
+## @param containerSecurityContext.seccompProfile.type Set container's Security Context seccomp profile
 ##
 containerSecurityContext:
   enabled: true
   runAsUser: 1001
   runAsNonRoot: true
+  privileged: false
+  readOnlyRootFilesystem: false
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: ["ALL"]
+  seccompProfile:
+    type: "RuntimeDefault"
 ## Keycloak resource requests and limits
 ## ref: https://kubernetes.io/docs/user-guide/compute-resources/
 ## @param resources.limits The resources limits for the Keycloak containers
@@ -456,7 +487,7 @@ sidecars: []
 service:
   ## @param service.type Kubernetes service type
   ##
-  type: LoadBalancer
+  type: ClusterIP
   ## @param service.http.enabled Enable http port on service
   ##
   http:
@@ -544,9 +575,9 @@ ingress:
   ## @param ingress.hostname Default host for the ingress record (evaluated as template)
   ##
   hostname: keycloak.local
-  ## @param ingress.path Default path for the ingress record
+  ## @param ingress.path [string] Default path for the ingress record (evaluated as template)
   ##
-  path: /
+  path: "{{ .Values.httpRelativePath }}"
   ## @param ingress.servicePort Backend service port to use
   ## Default is http. Alternative is https.
   ##
@@ -560,6 +591,12 @@ ingress:
   ##   cert-manager.io/cluster-issuer: cluster-issuer-name
   ##
   annotations: {}
+  ## @param ingress.labels Additional labels for the Ingress resource.
+  ## e.g:
+  ## labels:
+  ##   app: keycloak
+  ##
+  labels: {}
   ## @param ingress.tls Enable TLS configuration for the host defined at `ingress.hostname` parameter
   ## TLS certificates will be retrieved from a TLS secret with name: `{{- printf "%s-tls" (tpl .Values.ingress.hostname .) }}`
   ## You can:
@@ -744,6 +781,9 @@ metrics:
     annotations:
       prometheus.io/scrape: "true"
       prometheus.io/port: "{{ .Values.metrics.service.ports.http }}"
+    ## @param metrics.service.extraPorts [array] Add additional ports to the keycloak metrics service (i.e. admin port 9000)
+    ##
+    extraPorts: []
   ## Prometheus Operator ServiceMonitor configuration
   ##
   serviceMonitor:
@@ -756,8 +796,8 @@ metrics:
     ## @param metrics.serviceMonitor.endpoints [array] The endpoint configuration of the ServiceMonitor. Path is mandatory. Interval, timeout and labellings can be overwritten.
     ##
     endpoints:
-      - path: /metrics
-      - path: /realms/master/metrics
+      - path: '{{ include "keycloak.httpPath" . }}metrics'
+      - path: '{{ include "keycloak.httpPath" . }}realms/master/metrics'
     ## @param metrics.serviceMonitor.path Metrics service HTTP path. Deprecated: Use @param metrics.serviceMonitor.endpoints instead
     ##
     path: ""
@@ -829,9 +869,9 @@ keycloakConfigCli:
   enabled: false
   ## Bitnami keycloak-config-cli image
   ## ref: https://hub.docker.com/r/bitnami/keycloak-config-cli/tags/
-  ## @param keycloakConfigCli.image.registry keycloak-config-cli container image registry
-  ## @param keycloakConfigCli.image.repository keycloak-config-cli container image repository
-  ## @param keycloakConfigCli.image.tag keycloak-config-cli container image tag
+  ## @param keycloakConfigCli.image.registry [default: REGISTRY_NAME] keycloak-config-cli container image registry
+  ## @param keycloakConfigCli.image.repository [default: REPOSITORY_NAME/keycloak-config-cli] keycloak-config-cli container image repository
+  ## @skip keycloakConfigCli.image.tag keycloak-config-cli container image tag
   ## @param keycloakConfigCli.image.digest keycloak-config-cli container image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag
   ## @param keycloakConfigCli.image.pullPolicy keycloak-config-cli container image pull policy
   ## @param keycloakConfigCli.image.pullSecrets keycloak-config-cli container image pull secrets
@@ -839,7 +879,7 @@ keycloakConfigCli:
   image:
     registry: docker.io
     repository: bitnami/keycloak-config-cli
-    tag: 5.6.1-debian-11-r5
+    tag: 5.10.0-debian-11-r0
     digest: ""
     ## Specify a imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
@@ -881,14 +921,26 @@ keycloakConfigCli:
     requests: {}
   ## keycloak-config-cli containers' Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
-  ## @param keycloakConfigCli.containerSecurityContext.enabled Enabled keycloak-config-cli containers' Security Context
-  ## @param keycloakConfigCli.containerSecurityContext.runAsUser Set keycloak-config-cli container's Security Context runAsUser
-  ## @param keycloakConfigCli.containerSecurityContext.runAsNonRoot Set keycloak-config-cli container's Security Context runAsNonRoot
+  ## @param keycloakConfigCli.containerSecurityContext.enabled Enabled keycloak-config-cli Security Context
+  ## @param keycloakConfigCli.containerSecurityContext.runAsUser Set keycloak-config-cli Security Context runAsUser
+  ## @param keycloakConfigCli.containerSecurityContext.runAsNonRoot Set keycloak-config-cli Security Context runAsNonRoot
+  ## @param keycloakConfigCli.containerSecurityContext.privileged Set keycloak-config-cli Security Context privileged
+  ## @param keycloakConfigCli.containerSecurityContext.readOnlyRootFilesystem Set keycloak-config-cli Security Context readOnlyRootFilesystem
+  ## @param keycloakConfigCli.containerSecurityContext.allowPrivilegeEscalation Set keycloak-config-cli Security Context allowPrivilegeEscalation
+  ## @param keycloakConfigCli.containerSecurityContext.capabilities.drop List of capabilities to be dropped
+  ## @param keycloakConfigCli.containerSecurityContext.seccompProfile.type Set keycloak-config-cli Security Context seccomp profile
   ##
   containerSecurityContext:
     enabled: true
     runAsUser: 1001
     runAsNonRoot: true
+    privileged: false
+    readOnlyRootFilesystem: false
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop: ["ALL"]
+    seccompProfile:
+      type: "RuntimeDefault"
   ## keycloak-config-cli pods' Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
   ## @param keycloakConfigCli.podSecurityContext.enabled Enabled keycloak-config-cli pods' Security Context
@@ -968,13 +1020,12 @@ keycloakConfigCli:
   ##       "realm": "realm1",
   ##       "clients": []
   ##     }
-  ##   files/realm2.yaml:
-  ##   realm3.yaml: |
-  ##     realm: realm3
+  ##   realm2.yaml: |
+  ##     realm: realm2
   ##     clients: []
   ##
   configuration: {}
-  ## @param keycloakConfigCli.existingConfigmap ConfigMap with keycloak-config-cli configuration. This will override `keycloakConfigCli.config`
+  ## @param keycloakConfigCli.existingConfigmap ConfigMap with keycloak-config-cli configuration
   ## NOTE: This will override keycloakConfigCli.configuration
   ##
   existingConfigmap: ""
@@ -1016,7 +1067,12 @@ postgresql:
 ## @param externalDatabase.password Password for the non-root username for Keycloak
 ## @param externalDatabase.database Keycloak database name
 ## @param externalDatabase.existingSecret Name of an existing secret resource containing the database credentials
+## @param externalDatabase.existingSecretHostKey Name of an existing secret key containing the database host name
+## @param externalDatabase.existingSecretPortKey Name of an existing secret key containing the database port
+## @param externalDatabase.existingSecretUserKey Name of an existing secret key containing the database user
+## @param externalDatabase.existingSecretDatabaseKey Name of an existing secret key containing the database name
 ## @param externalDatabase.existingSecretPasswordKey Name of an existing secret key containing the database credentials
+## @param externalDatabase.annotations Additional custom annotations for external database secret object
 ##
 externalDatabase:
   host: ""
@@ -1025,7 +1081,12 @@ externalDatabase:
   database: bitnami_keycloak
   password: ""
   existingSecret: ""
+  existingSecretHostKey: ""
+  existingSecretPortKey: ""
+  existingSecretUserKey: ""
+  existingSecretDatabaseKey: ""
   existingSecretPasswordKey: ""
+  annotations: {}
 
 ## @section Keycloak Cache parameters
 

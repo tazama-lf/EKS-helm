@@ -1,4 +1,9 @@
 {{/*
+Copyright VMware, Inc.
+SPDX-License-Identifier: APACHE-2.0
+*/}}
+
+{{/*
 Return the proper Keycloak image name
 */}}
 {{- define "keycloak.image" -}}
@@ -36,7 +41,7 @@ Return true if a configmap object should be created for keycloak-config-cli
 Return the proper Docker Image Registry Secret Names
 */}}
 {{- define "keycloak.imagePullSecrets" -}}
-{{- include "common.images.pullSecrets" (dict "images" (list .Values.image .Values.keycloakConfigCli.image) "global" .Values.global) -}}
+{{- include "common.images.renderPullSecrets" (dict "images" (list .Values.image .Values.keycloakConfigCli.image) "context" $) -}}
 {{- end -}}
 
 {{/*
@@ -56,6 +61,16 @@ Create the name of the service account to use
 {{- else -}}
     {{ default "default" .Values.serviceAccount.name }}
 {{- end -}}
+{{- end -}}
+
+{{/*
+Return the path Keycloak is hosted on. This looks at httpRelativePath and returns it with a trailing slash. For example:
+    / -> / (the default httpRelativePath)
+    /auth -> /auth/ (trailing slash added)
+    /custom/ -> /custom/ (unchanged)
+*/}}
+{{- define "keycloak.httpPath" -}}
+{{ ternary .Values.httpRelativePath (printf "%s%s" .Values.httpRelativePath "/") (hasSuffix "/" .Values.httpRelativePath) }}
 {{- end -}}
 
 {{/*
@@ -160,7 +175,7 @@ Return the Database encrypted password
 {{/*
 Add environment variables to configure database values
 */}}
-{{- define "keycloak.databaseSecretKey" -}}
+{{- define "keycloak.databaseSecretPasswordKey" -}}
 {{- if .Values.postgresql.enabled -}}
     {{- print "password" -}}
 {{- else -}}
@@ -174,6 +189,35 @@ Add environment variables to configure database values
         {{- print "db-password" -}}
     {{- end -}}
 {{- end -}}
+{{- end -}}
+
+{{- define "keycloak.databaseSecretHostKey" -}}
+    {{- if .Values.externalDatabase.existingSecretHostKey -}}
+        {{- printf "%s" .Values.externalDatabase.existingSecretHostKey -}}
+    {{- else -}}
+        {{- print "db-host" -}}
+    {{- end -}}
+{{- end -}}
+{{- define "keycloak.databaseSecretPortKey" -}}
+    {{- if .Values.externalDatabase.existingSecretPortKey -}}
+        {{- printf "%s" .Values.externalDatabase.existingSecretPortKey -}}
+    {{- else -}}
+        {{- print "db-port" -}}
+    {{- end -}}
+{{- end -}}
+{{- define "keycloak.databaseSecretUserKey" -}}
+    {{- if .Values.externalDatabase.existingSecretUserKey -}}
+        {{- printf "%s" .Values.externalDatabase.existingSecretUserKey -}}
+    {{- else -}}
+        {{- print "db-port" -}}
+    {{- end -}}
+{{- end -}}
+{{- define "keycloak.databaseSecretDatabaseKey" -}}
+    {{- if .Values.externalDatabase.existingSecretDatabaseKey -}}
+        {{- printf "%s" .Values.externalDatabase.existingSecretDatabaseKey -}}
+    {{- else -}}
+        {{- print "db-port" -}}
+    {{- end -}}
 {{- end -}}
 
 {{/*

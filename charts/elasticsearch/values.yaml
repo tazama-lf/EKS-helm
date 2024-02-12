@@ -28,12 +28,20 @@ esMajorVersion: ""
 
 # Allows you to add any config files in /usr/share/elasticsearch/config/
 # such as elasticsearch.yml and log4j2.properties
-esConfig: {}
-#  elasticsearch.yml: |
-#    key:
-#      nestedkey: value
-#  log4j2.properties: |
-#    key = value
+esConfig:
+  elasticsearch.yml: |
+    cluster.name: "docker-cluster"
+    network.host: 0.0.0.0
+    xpack.security.enabled: true
+    xpack.security.transport.ssl.enabled: true
+    xpack.security.http.ssl.enabled: true
+    xpack.security.http.ssl.key: /usr/share/elasticsearch/config/certs/tls.key
+    xpack.security.http.ssl.certificate: /usr/share/elasticsearch/config/certs/tls.crt
+    xpack.security.http.ssl.certificate_authorities: ["/usr/share/elasticsearch/config/certs/ca.crt"]
+
+  log4j2.properties: |
+    logger.elasticsearchoutput.name = logstash.outputs.elasticsearch
+    logger.elasticsearchoutput.level = error
 
 createCert: true
 
@@ -44,9 +52,9 @@ esJvmOptions: {}
 # Extra environment variables to append to this nodeGroup
 # This will be appended to the current 'env:' key. You can use any of the kubernetes env
 # syntax here
-extraEnvs: []
-#  - name: MY_ENVIRONMENT_VAR
-#    value: the_value_goes_here
+#extraEnvs: 
+#  -  name: ELASTICSEARCH_HEAP_SIZE
+#     value: 600m
 
 # Allows you to load environment variables from kubernetes secret or config map
 envFrom: []
@@ -87,13 +95,7 @@ labels: {}
 
 esJavaOpts: "" # example: "-Xmx1g -Xms1g"
 
-resources:
-  requests:
-    cpu: "1000m"
-    memory: "2Gi"
-  limits:
-    cpu: "1000m"
-    memory: "2Gi"
+resources: {}
 
 initResources: {}
 # limits:
@@ -107,9 +109,10 @@ networkHost: "0.0.0.0"
 
 volumeClaimTemplate:
   accessModes: ["ReadWriteOnce"]
+  storageClassName: "gp2"
   resources:
     requests:
-      storage: 30Gi
+      storage: 100Gi
 
 rbac:
   create: false
