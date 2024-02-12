@@ -4,7 +4,7 @@ image:
   tag: latest
 arangodb:
   storage:
-    size: 50Gi
+    size: 100Gi
     class: gp2
   authentication:
     rootPassword: mysecretpassword

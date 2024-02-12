@@ -1,13 +1,15 @@
+{{- /*
+Copyright VMware, Inc.
+SPDX-License-Identifier: APACHE-2.0
+*/}}
+
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: {{ printf "%s-env-vars" (include "common.names.fullname" .) }}
   namespace: {{ include "common.names.namespace" . | quote }}
-  labels: {{- include "common.labels.standard" . | nindent 4 }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
     app.kubernetes.io/component: keycloak
-    {{- if .Values.commonLabels }}
-    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
-    {{- end }}
   {{- if .Values.commonAnnotations }}
   annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
   {{- end }}
@@ -16,10 +18,18 @@ data:
   KEYCLOAK_HTTP_PORT: {{ .Values.containerPorts.http | quote }}
   KEYCLOAK_PROXY: {{ .Values.proxy | quote }}
   KEYCLOAK_ENABLE_STATISTICS: {{ ternary "true" "false" .Values.metrics.enabled | quote }}
+  {{- if not .Values.externalDatabase.existingSecretHostKey }}
   KEYCLOAK_DATABASE_HOST: {{ include "keycloak.databaseHost" . | quote }}
+  {{- end }}
+  {{- if not .Values.externalDatabase.existingSecretPortKey }}
   KEYCLOAK_DATABASE_PORT: {{ include "keycloak.databasePort" . }}
+  {{- end }}
+  {{- if not .Values.externalDatabase.existingSecretDatabaseKey }}
   KEYCLOAK_DATABASE_NAME: {{ include "keycloak.databaseName" . | quote }}
+  {{- end }}
+  {{- if not .Values.externalDatabase.existingSecretUserKey }}
   KEYCLOAK_DATABASE_USER: {{ include "keycloak.databaseUser" . | quote }}
+  {{- end }}
   KEYCLOAK_PRODUCTION:  {{ ternary "true" "false" .Values.production | quote }}
   KEYCLOAK_ENABLE_HTTPS: {{ ternary "true" "false" .Values.tls.enabled | quote }}
   {{- if .Values.tls.enabled }}

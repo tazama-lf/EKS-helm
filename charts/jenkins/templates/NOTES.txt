@@ -1,47 +1,68 @@
-CHART NAME: {{ .Chart.Name }}
-CHART VERSION: {{ .Chart.Version }}
-APP VERSION: {{ .Chart.AppVersion }}
-
-** Please be patient while the chart is being deployed **
-
-{{- if .Values.ingress.enabled }}
-
-1. Get the Jenkins URL and associate its hostname to your cluster external IP:
-
-   export CLUSTER_IP=$(minikube ip) # On Minikube. Use: `kubectl cluster-info` on others K8s clusters
-   echo "Jenkins URL: http{{ if .Values.ingress.tls }}s{{ end }}://{{ .Values.ingress.hostname }}"
-   echo "$CLUSTER_IP  {{ .Values.ingress.hostname }}" | sudo tee -a /etc/hosts
-
+{{- $prefix := .Values.controller.jenkinsUriPrefix | default "" -}}
+{{- $url := "" -}}
+1. Get your '{{ .Values.controller.admin.username }}' user password by running:
+  kubectl exec --namespace {{ template "jenkins.namespace" . }} -it svc/{{ template "jenkins.fullname" . }} -c jenkins -- /bin/cat /run/secrets/additional/chart-admin-password && echo
+{{- if .Values.controller.ingress.hostName -}}
+{{- if .Values.controller.ingress.tls -}}
+{{- $url = print "https://" .Values.controller.ingress.hostName $prefix -}}
+{{- else -}}
+{{- $url = print "http://" .Values.controller.ingress.hostName $prefix -}}
+{{- end }}
+2. Visit {{ $url }}
 {{- else }}
+2. Get the Jenkins URL to visit by running these commands in the same shell:
+{{- if contains "NodePort" .Values.controller.serviceType }}
+  export NODE_PORT=$(kubectl get --namespace {{ template "jenkins.namespace" . }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ template "jenkins.fullname" . }})
+  export NODE_IP=$(kubectl get nodes --namespace {{ template "jenkins.namespace" . }} -o jsonpath="{.items[0].status.addresses[0].address}")
+{{- if .Values.controller.httpsKeyStore.enable -}}
+{{- $url = print "https://$NODE_IP:$NODE_PORT" $prefix -}}
+{{- else -}}
+{{- $url = print "http://$NODE_IP:$NODE_PORT" $prefix -}}
+{{- end }}
+  echo {{ $url }}
 
-1. Get the Jenkins URL by running:
+{{- else if contains "LoadBalancer" .Values.controller.serviceType }}
+  NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+        You can watch the status of by running 'kubectl get svc --namespace {{ template "jenkins.namespace" . }} -w {{ template "jenkins.fullname" . }}'
+  export SERVICE_IP=$(kubectl get svc --namespace {{ template "jenkins.namespace" . }} {{ template "jenkins.fullname" . }} --template "{{ "{{ range (index .status.loadBalancer.ingress 0) }}{{ . }}{{ end }}" }}")
+{{- if .Values.controller.httpsKeyStore.enable -}}
+{{- $url = print "https://$SERVICE_IP:" .Values.controller.servicePort $prefix -}}
+{{- else -}}
+{{- $url = print "http://$SERVICE_IP:" .Values.controller.servicePort $prefix -}}
+{{- end }}
+  echo {{ $url }}
 
-{{- if contains "NodePort" .Values.service.type }}
-
-  export NODE_PORT=$(kubectl get --namespace {{ include "common.names.namespace" . }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ template "common.names.fullname" . }})
-  export NODE_IP=$(kubectl get nodes --namespace {{ include "common.names.namespace" . }} -o jsonpath="{.items[0].status.addresses[0].address}")
-  echo "Jenkins URL: http://$NODE_IP:$NODE_PORT/"
-
-{{- else if contains "LoadBalancer" .Values.service.type }}
-
-** Please ensure an external IP is associated to the {{ template "common.names.fullname" . }} service before proceeding **
-** Watch the status using: kubectl get svc --namespace {{ include "common.names.namespace" . }} -w {{ template "common.names.fullname" . }} **
-
-  export SERVICE_IP=$(kubectl get svc --namespace {{ include "common.names.namespace" . }} {{ template "common.names.fullname" . }} --template "{{ "{{ range (index .status.loadBalancer.ingress 0) }}{{ . }}{{ end }}" }}")
-{{- $port:=.Values.service.ports.http | toString }}
-  echo "Jenkins URL: http://$SERVICE_IP{{- if ne $port "80" }}:{{ .Values.service.ports.http }}{{ end }}/"
-
-{{- else if contains "ClusterIP"  .Values.service.type }}
-
-  echo "Jenkins URL: http://127.0.0.1:8080/"
-  kubectl port-forward --namespace {{ include "common.names.namespace" . }} svc/{{ template "common.names.fullname" . }} 8080:{{ .Values.service.ports.http }}
-
+{{- else if contains "ClusterIP"  .Values.controller.serviceType -}}
+{{- if .Values.controller.httpsKeyStore.enable -}}
+{{- $url = print "https://127.0.0.1:" .Values.controller.servicePort $prefix -}}
+{{- else -}}
+{{- $url = print "http://127.0.0.1:" .Values.controller.servicePort $prefix -}}
+{{- end }}
+  echo {{ $url }}
+  kubectl --namespace {{ template "jenkins.namespace" . }} port-forward svc/{{template "jenkins.fullname" . }} {{ .Values.controller.servicePort }}:{{ .Values.controller.servicePort }}
 {{- end }}
 {{- end }}
 
-2. Login with the following credentials
+3. Login with the password from step 1 and the username: {{ .Values.controller.admin.username }}
+4. Configure security realm and authorization strategy
+5. Use Jenkins Configuration as Code by specifying configScripts in your values.yaml file, see documentation: {{ $url }}/configuration-as-code and examples: https://github.com/jenkinsci/configuration-as-code-plugin/tree/master/demos
 
-  echo Username: {{ .Values.jenkinsUser }}
-  echo Password: $(kubectl get secret --namespace {{ include "common.names.namespace" . }} {{ template "common.names.fullname" . }} -o jsonpath="{.data.jenkins-password}" | base64 -d)
+For more information on running Jenkins on Kubernetes, visit:
+https://cloud.google.com/solutions/jenkins-on-container-engine
 
-{{- include "jenkins.checkRollingTags" . }}
+For more information about Jenkins Configuration as Code, visit:
+https://jenkins.io/projects/jcasc/
+
+{{ if and (eq .Values.controller.image.repository "jenkins/jenkins") (eq .Values.controller.image.registry "docker.io") }}
+NOTE: Consider using a custom image with pre-installed plugins
+{{- else if .Values.controller.installPlugins }}
+NOTE: Consider disabling `installPlugins` if your image already contains plugins.
+{{- end }}
+
+{{- if .Values.persistence.enabled }}
+{{- else }}
+#################################################################################
+######   WARNING: Persistence is disabled!!! You will lose your data when   #####
+######            the Jenkins pod is terminated.                            #####
+#################################################################################
+{{- end }}
