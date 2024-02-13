@@ -3,7 +3,7 @@ entries:
   apm-server:
   - apiVersion: v1
     appVersion: 8.5.1
-    created: "2024-02-12T17:48:32.0371486+02:00"
+    created: "2024-02-13T15:24:02.4890909+02:00"
     description: Official Elastic helm chart for Elastic APM Server
     digest: 3785645efb007289358525f1eaab85a72b6d6c776a00b93bcfa081fcb68edae8
     home: https://github.com/elastic/helm-charts
@@ -19,7 +19,7 @@ entries:
     version: 8.5.1
   arangodb:
   - apiVersion: v2
-    created: "2024-02-12T17:48:32.0377102+02:00"
+    created: "2024-02-13T15:24:02.4890909+02:00"
     digest: 8386df389e899d186b9de06660690233786ec9e0d810ae8a560f1a49a5585c05
     name: arangodb
     urls:
@@ -27,7 +27,7 @@ entries:
     version: 1.0.0
   arangodb-ingress-proxy:
   - apiVersion: v1
-    created: "2024-02-12T17:48:32.0453561+02:00"
+    created: "2024-02-13T15:24:02.4896486+02:00"
     description: ArangoDB Ingress Proxy
     digest: 0f2b868e1f2a056117e01bc0163cfed922d695187727b164b468bd705230f730
     name: arangodb-ingress-proxy
@@ -37,7 +37,7 @@ entries:
   elasticsearch:
   - apiVersion: v1
     appVersion: 8.5.1
-    created: "2024-02-12T17:48:32.0523298+02:00"
+    created: "2024-02-13T15:24:02.4912806+02:00"
     description: Official Elastic helm chart for Elasticsearch
     digest: 7409753b543346e883ed800cca6e9a9a7ec14a747a0643d1dbe89832fad26c1e
     home: https://github.com/elastic/helm-charts
@@ -61,7 +61,7 @@ entries:
           url: https://github.com/grafana/grafana
     apiVersion: v2
     appVersion: 10.0.3
-    created: "2024-02-12T17:48:32.0671522+02:00"
+    created: "2024-02-13T15:24:02.4957425+02:00"
     description: The leading tool for querying and visualizing time series and metrics.
     digest: 2c97f0e8e707fd734237c0b55929dfd0d537567ef38722909bbf773630ae5987
     home: https://grafana.net
@@ -91,7 +91,7 @@ entries:
     version: 6.58.8
   infra-chart:
   - apiVersion: v2
-    created: "2024-02-12T17:48:32.0742391+02:00"
+    created: "2024-02-13T15:24:02.4957425+02:00"
     description: A Helm chart for installing infrastructure components for the FRMS
       system.
     digest: 6b095dec112672d374cf453d46df4aa0c8b2e8e3ac919fd985b63639e2bcdaa8
@@ -122,7 +122,7 @@ entries:
           url: https://github.com/jenkinsci/helm-charts/issues
     apiVersion: v2
     appVersion: 2.426.3
-    created: "2024-02-12T17:48:32.0858523+02:00"
+    created: "2024-02-13T15:24:02.4990623+02:00"
     description: Jenkins - Build great things at any scale! The leading open source
       automation server, Jenkins provides over 1800 plugins to support building, deploying
       and automating any project.
@@ -164,7 +164,7 @@ entries:
       licenses: Apache-2.0
     apiVersion: v2
     appVersion: 23.0.3
-    created: "2024-02-12T17:48:32.1052066+02:00"
+    created: "2024-02-13T15:24:02.506602+02:00"
     dependencies:
     - condition: postgresql.enabled
       name: postgresql
@@ -196,7 +196,7 @@ entries:
   kibana:
   - apiVersion: v1
     appVersion: 8.5.1
-    created: "2024-02-12T17:48:32.1082068+02:00"
+    created: "2024-02-13T15:24:02.5076023+02:00"
     description: Official Elastic helm chart for Kibana
     digest: ddcfaf0cc7e917f8317b6744e74624c2c48a8ddea58063301f8f0babdcd2a72c
     home: https://github.com/elastic/helm-charts
@@ -213,7 +213,7 @@ entries:
   logstash:
   - apiVersion: v1
     appVersion: 8.5.1
-    created: "2024-02-12T17:48:32.1092059+02:00"
+    created: "2024-02-13T15:24:02.5086049+02:00"
     description: Official Elastic helm chart for Logstash
     digest: fc870df53e145fafbeeed01d9e7a3d7487fdd920416d53083ddf5095ee00bb11
     home: https://github.com/elastic/helm-charts
@@ -230,7 +230,7 @@ entries:
   nats:
   - apiVersion: v2
     appVersion: 2.9.19
-    created: "2024-02-12T17:48:32.1123948+02:00"
+    created: "2024-02-13T15:24:02.5096023+02:00"
     description: A Helm chart for the NATS.io High Speed Cloud Native Distributed
       Communications Technology.
     digest: fff0da9720561243495712ae1bd2e995706d9e13e221a48c541c135e58e43500
@@ -259,7 +259,7 @@ entries:
       licenses: Apache-2.0
     apiVersion: v2
     appVersion: 1.9.4
-    created: "2024-02-12T17:48:32.1167428+02:00"
+    created: "2024-02-13T15:24:02.512603+02:00"
     dependencies:
     - name: common
       repository: oci://registry-1.docker.io/bitnamicharts
@@ -268,7 +268,7 @@ entries:
       version: 2.x.x
     description: NGINX Ingress Controller is an Ingress controller that manages external
       access to HTTP services in a Kubernetes cluster using NGINX.
-    digest: 5ca39246c3ce075f3959b85cb76c6156fe781a2bc52ccbff29adab4f7cab6237
+    digest: 6575251452936cbbf4301ea49ecf0166e9f70223efb002115733fb8ea9c91321
     home: https://bitnami.com
     icon: https://bitnami.com/assets/stacks/nginx-ingress-controller/img/nginx-ingress-controller-stack-220x234.png
     keywords:
@@ -298,7 +298,7 @@ entries:
           url: https://github.com/prometheus/prometheus
     apiVersion: v2
     appVersion: v2.46.0
-    created: "2024-02-12T17:48:32.1278619+02:00"
+    created: "2024-02-13T15:24:02.5196214+02:00"
     dependencies:
     - condition: alertmanager.enabled
       name: alertmanager
@@ -359,7 +359,7 @@ entries:
       licenses: Apache-2.0
     apiVersion: v2
     appVersion: 7.2.3
-    created: "2024-02-12T17:48:32.1353841+02:00"
+    created: "2024-02-13T15:24:02.5236209+02:00"
     dependencies:
     - name: common
       repository: oci://registry-1.docker.io/bitnamicharts
@@ -390,7 +390,7 @@ entries:
       charts.openshift.io/name: HashiCorp Vault
     apiVersion: v2
     appVersion: 1.13.1
-    created: "2024-02-12T17:48:32.1385255+02:00"
+    created: "2024-02-13T15:24:02.5276886+02:00"
     description: Official HashiCorp Vault Chart
     digest: 69ee8d063307bee7d5cb447084ea61eb60aecb71e86655a25a1df8197643e29d
     home: https://www.vaultproject.io
@@ -413,4 +413,4 @@ entries:
     urls:
     - charts/vault-0.24.0.tgz
     version: 0.24.0
-generated: "2024-02-12T17:48:32.0283681+02:00"
+generated: "2024-02-13T15:24:02.4879954+02:00"
