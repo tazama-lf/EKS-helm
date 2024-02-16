@@ -425,7 +425,7 @@ additionalVolumeMounts: []
 
 cluster:
   enabled: true
-  replicas: 18 
+  replicas: 3 
   noAdvertise: false
 
   # Explicitly set routes for clustering.
