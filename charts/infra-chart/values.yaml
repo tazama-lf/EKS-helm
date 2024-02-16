@@ -3,4 +3,4 @@ namespaces:
   - name: development
   - name: ingress-nginx
   - name: processor
-  - name: ecks-ns
+  - name: aws-ecr-ns
