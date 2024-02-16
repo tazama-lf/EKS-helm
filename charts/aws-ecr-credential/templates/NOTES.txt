@@ -1,0 +1,4 @@
+Run the following command to see the aws-registry secret:
+
+    kubectl describe secret aws-registry
+

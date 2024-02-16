@@ -1,0 +1,69 @@
+{{- if ne .Values.mode "register" }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "aws-ecr-credential.job" . }}
+  namespace: {{ include "aws-ecr-credential.namespace" . }}
+  labels:
+{{ include "aws-ecr-credential.labels" . | indent 4 }}
+spec:
+  backoffLimit: 4
+  template:
+    metadata:
+      labels:
+{{ include "aws-ecr-credential.podLabels" . | indent 8 }}
+    spec:
+      serviceAccountName: {{ include "aws-ecr-credential.serviceAccount" . }}
+      terminationGracePeriodSeconds: 0
+      restartPolicy: Never
+      containers:
+      - name: kubectl
+        imagePullPolicy: IfNotPresent
+        image: {{ .Values.jobImage }}:{{ .Values.jobImageTag }}
+        env:
+          - name: AWS_ECR_REGISTRY
+            valueFrom:
+              secretKeyRef:
+                name: {{ include "aws-ecr-credential.secret" . }}
+                key: AWS_ECR_REGISTRY
+          - name: AWS_ACCESS_KEY_ID
+            valueFrom:
+              secretKeyRef:
+                name: {{ include "aws-ecr-credential.secret" . }}
+                key: AWS_ACCESS_KEY_ID
+          - name: AWS_SECRET_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                name: {{ include "aws-ecr-credential.secret" . }}
+                key: AWS_SECRET_ACCESS_KEY
+          - name: TARGET_NAMESPACE
+            value: {{ include "aws-ecr-credential.targetNamespace" . }}
+          - name: TARGET_SECRET
+            value: {{ .Values.targetSecret }}
+        command:
+        - "/bin/sh"
+        - "-c"
+        - |
+          AWS_ACCOUNT="$(printf $AWS_ECR_REGISTRY | sed 's/\(^[0-9]\+\).*/\1/')"
+          AWS_REGION="$(printf $AWS_ECR_REGISTRY | sed 's/.*\.\([^\.]\+\)\.amazonaws\.com.*/\1/')"
+          echo "AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID"
+          echo "AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY"
+          echo "AWS_ACCOUNT=$AWS_ACCOUNT"
+          echo "AWS_REGION=$AWS_REGION"
+          DOCKER_REGISTRY_SERVER=https://${AWS_ECR_REGISTRY}
+          DOCKER_USER=AWS
+          DOCKER_PASSWORD=`aws ecr get-login --region ${AWS_REGION} --registry-ids ${AWS_ACCOUNT} | cut -d' ' -f6`
+
+          echo "DOCKER_REGISTRY_SERVER=$DOCKER_REGISTRY_SERVER"
+          echo "DOCKER_USER=$DOCKER_USER"
+          echo "DOCKER_PASSWORD=$DOCKER_PASSWORD"
+
+          kubectl delete secret --namespace $TARGET_NAMESPACE $TARGET_SECRET || true
+          kubectl create secret --namespace $TARGET_NAMESPACE docker-registry $TARGET_SECRET \
+          --docker-server=$DOCKER_REGISTRY_SERVER \
+          --docker-username=$DOCKER_USER \
+          --docker-password=$DOCKER_PASSWORD \
+          --docker-email=no@email.local
+
+          kubectl patch serviceaccount default -p "{\"imagePullSecrets\":[{\"name\":\"$TARGET_SECRET\"}]}"
+{{- end }}
