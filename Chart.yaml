@@ -7,6 +7,7 @@ keywords:
   - apm
   - arangodb
   - arangodb-ingress
+  - aws-ecr-credential
   - elasticsearch
   - grafana
   - infra-chart
@@ -34,6 +35,9 @@ dependencies:
   - name: arangodb-ingress
     version: 1.0.0
     repository: charts/arangodb-ingress-proxy-1.0.0.tgz
+  - name: aws-ecr-credential
+    version: 1.4.2
+    repository: charts/aws-ecr-credential-1.4.2
   - name: elasticsearch
     version: 8.5.1
     repository: charts/elasticsearch-8.5.1.tgz
@@ -59,8 +63,8 @@ dependencies:
     version: 0.19.16
     repository: charts/nats-0.19.16.tgz
   - name: nginx-ingress
-    version: 9.9.3
-    repository: charts/nginx-ingress-controller-9.9.3.tgz
+    version: 4.9.1
+    repository: charts/ingress-nginx-4.9.1.tgz
   - name: prometheus
     version: 23.2.0
     repository: charts/prometheus-23.2.0.tgz

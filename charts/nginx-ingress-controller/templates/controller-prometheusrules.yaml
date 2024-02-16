@@ -1,26 +1,23 @@
-{{- /*
-Copyright VMware, Inc.
-SPDX-License-Identifier: APACHE-2.0
-*/}}
-
-{{- if and .Values.metrics.enabled .Values.metrics.prometheusRule.enabled }}
+{{- if and ( .Values.controller.metrics.enabled ) ( .Values.controller.metrics.prometheusRule.enabled ) ( .Capabilities.APIVersions.Has "monitoring.coreos.com/v1" ) -}}
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
-  name: {{ include "common.names.fullname" . }}
-  namespace: {{ default (include "common.names.namespace" .) .Values.metrics.prometheusRule.namespace | quote }}
-  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+  name: {{ include "ingress-nginx.controller.fullname" . }}
+{{- if .Values.controller.metrics.prometheusRule.namespace }}
+  namespace: {{ .Values.controller.metrics.prometheusRule.namespace }}
+{{- else }}
+  namespace: {{ include "ingress-nginx.namespace" . }}
+{{- end }}
+  labels:
+    {{- include "ingress-nginx.labels" . | nindent 4 }}
     app.kubernetes.io/component: controller
-    {{- if .Values.metrics.prometheusRule.additionalLabels }}
-    {{- include "common.tplvalues.render" (dict "value" .Values.metrics.prometheusRule.additionalLabels "context" $) | nindent 4 }}
-    {{- end }}
-  {{- if .Values.commonAnnotations }}
-  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- if .Values.controller.metrics.prometheusRule.additionalLabels }}
+    {{- toYaml .Values.controller.metrics.prometheusRule.additionalLabels | nindent 4 }}
   {{- end }}
 spec:
-  {{- with .Values.metrics.prometheusRule.rules }}
+{{- if .Values.controller.metrics.prometheusRule.rules }}
   groups:
-    - name: {{ include "common.names.name" $ }}
-      rules: {{- toYaml . | nindent 6 }}
-  {{- end }}
+  - name: {{ template "ingress-nginx.name" . }}
+    rules: {{- toYaml .Values.controller.metrics.prometheusRule.rules | nindent 4 }}
+{{- end }}
 {{- end }}

@@ -1,28 +1,26 @@
-{{- /*
-Copyright VMware, Inc.
-SPDX-License-Identifier: APACHE-2.0
-*/}}
-
-{{- if and .Values.pdb.create (eq .Values.kind "Deployment") }}
-apiVersion: {{ include "common.capabilities.policy.apiVersion" . }}
+{{- if or (and .Values.controller.autoscaling.enabled (gt (.Values.controller.autoscaling.minReplicas | int) 1)) (and (not .Values.controller.autoscaling.enabled) (gt (.Values.controller.replicaCount | int) 1)) }}
+apiVersion: {{ ternary "policy/v1" "policy/v1beta1" (semverCompare ">=1.21.0-0" .Capabilities.KubeVersion.Version) }}
 kind: PodDisruptionBudget
 metadata:
-  name: {{ template "common.names.fullname" . }}
-  namespace: {{ include "common.names.namespace" . | quote }}
-  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+  labels:
+    {{- include "ingress-nginx.labels" . | nindent 4 }}
     app.kubernetes.io/component: controller
-  {{- if .Values.commonAnnotations }}
-  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+    {{- with .Values.controller.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  name: {{ include "ingress-nginx.controller.fullname" . }}
+  namespace: {{ include "ingress-nginx.namespace" . }}
+  {{- if .Values.controller.annotations }}
+  annotations: {{ toYaml .Values.controller.annotations | nindent 4 }}
   {{- end }}
 spec:
-  {{- if .Values.pdb.minAvailable }}
-  minAvailable: {{ .Values.pdb.minAvailable }}
-  {{- end }}
-  {{- if .Values.pdb.maxUnavailable }}
-  maxUnavailable: {{ .Values.pdb.maxUnavailable }}
-  {{- end }}
-  {{- $podLabels := include "common.tplvalues.merge" ( dict "values" ( list .Values.podLabels .Values.commonLabels ) "context" . ) }}
   selector:
-    matchLabels: {{- include "common.labels.matchLabels" ( dict "customLabels" $podLabels "context" $ ) | nindent 6 }}
+    matchLabels:
+      {{- include "ingress-nginx.selectorLabels" . | nindent 6 }}
       app.kubernetes.io/component: controller
+  {{- if and .Values.controller.minAvailable (not (hasKey .Values.controller "maxUnavailable")) }}
+  minAvailable: {{ .Values.controller.minAvailable }}
+  {{- else if .Values.controller.maxUnavailable }}
+  maxUnavailable: {{ .Values.controller.maxUnavailable }}
+  {{- end }}
 {{- end }}

@@ -1,47 +1,53 @@
-{{- /*
-Copyright VMware, Inc.
-SPDX-License-Identifier: APACHE-2.0
-*/}}
-
-{{- if and .Values.metrics.enabled .Values.metrics.serviceMonitor.enabled }}
+{{- if and .Values.controller.metrics.enabled .Values.controller.metrics.serviceMonitor.enabled -}}
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: {{ template "common.names.fullname" . }}
-  namespace: {{ default (include "common.names.namespace" .) .Values.metrics.serviceMonitor.namespace | quote }}
-  {{- $labels := include "common.tplvalues.merge" ( dict "values" ( list .Values.metrics.serviceMonitor.labels .Values.commonLabels ) "context" . ) }}
-  labels: {{- include "common.labels.standard" ( dict "customLabels" $labels "context" $ ) | nindent 4 }}
-    app.kubernetes.io/component: metrics
-  {{- if or .Values.metrics.serviceMonitor.annotations .Values.commonAnnotations }}
-  {{- $annotations := include "common.tplvalues.merge" ( dict "values" ( list .Values.metrics.serviceMonitor.annotations .Values.commonAnnotations ) "context" . ) }}
-  annotations: {{- include "common.tplvalues.render" ( dict "value" $annotations "context" $) | nindent 4 }}
+  name: {{ include "ingress-nginx.controller.fullname" . }}
+{{- if .Values.controller.metrics.serviceMonitor.namespace }}
+  namespace: {{ .Values.controller.metrics.serviceMonitor.namespace }}
+{{- else }}
+  namespace: {{ include "ingress-nginx.namespace" . }}
+{{- end }}
+  labels:
+    {{- include "ingress-nginx.labels" . | nindent 4 }}
+    app.kubernetes.io/component: controller
+  {{- if .Values.controller.metrics.serviceMonitor.additionalLabels }}
+    {{- toYaml .Values.controller.metrics.serviceMonitor.additionalLabels | nindent 4 }}
+  {{- end }}
+  {{- if .Values.controller.metrics.serviceMonitor.annotations }}
+  annotations: {{ toYaml .Values.controller.metrics.serviceMonitor.annotations | nindent 4 }}
   {{- end }}
 spec:
-  jobLabel: {{ .Values.metrics.serviceMonitor.jobLabel | quote }}
   endpoints:
-    - port: metrics
-      {{- if .Values.metrics.serviceMonitor.interval }}
-      interval: {{ .Values.metrics.serviceMonitor.interval }}
-      {{- end }}
-      {{- if .Values.metrics.serviceMonitor.scrapeTimeout }}
-      scrapeTimeout: {{ .Values.metrics.serviceMonitor.scrapeTimeout }}
-      {{- end }}
-      {{- if .Values.metrics.serviceMonitor.honorLabels }}
-      honorLabels: {{ .Values.metrics.serviceMonitor.honorLabels }}
-      {{- end }}
-      {{- if .Values.metrics.serviceMonitor.metricRelabelings }}
-      metricRelabelings: {{- include "common.tplvalues.render" ( dict "value" .Values.metrics.serviceMonitor.metricRelabelings "context" $) | nindent 8 }}
-      {{- end }}
-      {{- if .Values.metrics.serviceMonitor.relabelings }}
-      relabelings: {{- include "common.tplvalues.render" ( dict "value" .Values.metrics.serviceMonitor.relabelings "context" $) | nindent 8 }}
-      {{- end }}
+    - port: {{ .Values.controller.metrics.portName }}
+      interval: {{ .Values.controller.metrics.serviceMonitor.scrapeInterval }}
+    {{- if .Values.controller.metrics.serviceMonitor.honorLabels }}
+      honorLabels: true
+    {{- end }}
+    {{- if .Values.controller.metrics.serviceMonitor.relabelings }}
+      relabelings: {{ toYaml .Values.controller.metrics.serviceMonitor.relabelings | nindent 8 }}
+    {{- end }}
+    {{- if .Values.controller.metrics.serviceMonitor.metricRelabelings }}
+      metricRelabelings: {{ toYaml .Values.controller.metrics.serviceMonitor.metricRelabelings | nindent 8 }}
+    {{- end }}
+{{- if .Values.controller.metrics.serviceMonitor.jobLabel }}
+  jobLabel: {{ .Values.controller.metrics.serviceMonitor.jobLabel | quote }}
+{{- end }}
+{{- if .Values.controller.metrics.serviceMonitor.namespaceSelector }}
+  namespaceSelector: {{ toYaml .Values.controller.metrics.serviceMonitor.namespaceSelector | nindent 4 }}
+{{- else }}
   namespaceSelector:
     matchNames:
-      - {{ .Release.Namespace }}
+      - {{ include "ingress-nginx.namespace" . }}
+{{- end }}
+{{- if .Values.controller.metrics.serviceMonitor.targetLabels }}
+  targetLabels:
+  {{- range .Values.controller.metrics.serviceMonitor.targetLabels }}
+    - {{ . }}
+  {{- end }}
+{{- end }}
   selector:
-    matchLabels: {{- include "common.labels.matchLabels" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 6 }}
-      app.kubernetes.io/component: metrics
-      {{- if .Values.metrics.serviceMonitor.selector }}
-      {{- include "common.tplvalues.render" (dict "value" .Values.metrics.serviceMonitor.selector "context" $) | nindent 6 }}
-      {{- end }}
+    matchLabels:
+      {{- include "ingress-nginx.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: controller
 {{- end }}
