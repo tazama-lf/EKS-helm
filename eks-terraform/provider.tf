@@ -4,11 +4,6 @@
 
 terraform {
 
-  backend "s3" {
-    bucket  = "tazama-tf-state"
-    region  = var.region
-  }
-
   required_providers {
     aws = {
       source  = "hashicorp/aws"
