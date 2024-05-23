@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 {{- if .Values.networkPolicy }}
 apiVersion: {{ include "prometheus-pushgateway.networkPolicy.apiVersion" . }}
 kind: NetworkPolicy

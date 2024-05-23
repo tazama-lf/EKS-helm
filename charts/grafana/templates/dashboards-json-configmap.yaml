@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 {{- if .Values.dashboards }}
 {{ $files := .Files }}
 {{- range $provider, $dashboards := .Values.dashboards }}

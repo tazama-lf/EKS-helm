@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+
 # Migration Guide from helm/charts
 
 There are two viable options for migrating from the community Elasticsearch Helm

@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+
 # kube-state-metrics Helm Chart
 
 Installs the [kube-state-metrics agent](https://github.com/kubernetes/kube-state-metrics).

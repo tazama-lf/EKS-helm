@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 apiVersion: v2
 appVersion: 2.9.19
 description: A Helm chart for the NATS.io High Speed Cloud Native Distributed Communications

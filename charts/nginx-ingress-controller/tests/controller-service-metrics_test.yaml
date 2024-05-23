@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 suite: Controller > Service > Metrics
 templates:
   - controller-service-metrics.yaml

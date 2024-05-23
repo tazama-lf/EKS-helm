@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 {{- if and .Values.controller.keda.enabled (eq .Values.controller.kind "Deployment") -}}
 apiVersion: {{ .Values.controller.keda.apiVersion }}
 kind: ScaledObject

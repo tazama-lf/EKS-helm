@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+
 # Contributing to Vault Helm
 
 **Please note:** We take Vault's security and our users' trust very seriously.

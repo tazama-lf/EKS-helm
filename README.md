@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+
 # EKS Detailed Installation Guide
 
 **This article will be an end-to-end guide for installing Tazama to any cluster but only once your EKS infrastructure is setup**.

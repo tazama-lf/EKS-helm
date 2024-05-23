@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 {{- if and .Values.rbac.create (or (not .Values.rbac.namespaced) .Values.rbac.extraClusterRoleRules) (not .Values.rbac.useExistingRole) }}
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1

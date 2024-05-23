@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+
 # Alertmanager
 
 As per [prometheus.io documentation](https://prometheus.io/docs/alerting/latest/alertmanager/):

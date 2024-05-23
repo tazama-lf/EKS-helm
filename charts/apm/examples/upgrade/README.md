@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+
 # Upgrade
 
 This example will deploy APM Server chart using an old chart version,

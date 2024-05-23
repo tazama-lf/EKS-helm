@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 {{- $kubeTargetVersion := default .Capabilities.KubeVersion.GitVersion .Values.kubeTargetVersionOverride }}
 {{- if .Values.controller.ingress.enabled }}
 {{- if semverCompare ">=1.19-0" $kubeTargetVersion -}}

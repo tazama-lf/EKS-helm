@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+
 # Grafana Helm Chart
 
 * Installs the web dashboarding system [Grafana](http://grafana.org/)

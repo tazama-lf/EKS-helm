@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 # Chart.yaml
 apiVersion: v2
 name: arangodb

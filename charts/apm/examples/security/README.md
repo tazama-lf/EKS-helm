@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+
 # Security
 
 This example deploy APM Server 8.5.1 using authentication and TLS to connect to

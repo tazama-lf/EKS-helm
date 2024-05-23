@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 ---
 clusterName: upgrade
 # Rolling upgrade doesn't work when upgrading from clusters with security disabled.

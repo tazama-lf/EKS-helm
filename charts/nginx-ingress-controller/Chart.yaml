@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 annotations:
   artifacthub.io/changes: |-
     - "update web hook cert gen to latest release v20231226-1a7112e06"

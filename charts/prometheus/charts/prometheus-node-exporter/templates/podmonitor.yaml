@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 {{- if .Values.prometheus.podMonitor.enabled }}
 apiVersion: {{ .Values.prometheus.podMonitor.apiVersion | default "monitoring.coreos.com/v1" }}
 kind: PodMonitor
