@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 {{- if .Values.checkDeprecation }}
    {{- if .Values.master }}
       {{ fail "`master` does no longer exist. It has been renamed to `controller`" }}

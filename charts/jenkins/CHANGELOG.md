@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+
 # Changelog
 
 This file documents all notable changes to the Jenkins Helm Chart.

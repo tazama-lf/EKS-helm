@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+
 # helm
 All the helm charts for running the FRMS platform
 

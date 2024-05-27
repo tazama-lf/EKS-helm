@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+
 # Elasticsearch
 
 This example deploy Logstash 8.5.1 which connects to Elasticsearch (see

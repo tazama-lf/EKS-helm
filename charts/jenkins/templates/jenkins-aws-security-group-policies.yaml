@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 {{- if .Values.awsSecurityGroupPolicies.enabled -}}
 {{- range .Values.awsSecurityGroupPolicies.policies -}}
 apiVersion: vpcresources.k8s.aws/v1beta1

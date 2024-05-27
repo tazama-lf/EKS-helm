@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 serverInfo:
     contextPath: /v1/helm
 apiVersion: v1

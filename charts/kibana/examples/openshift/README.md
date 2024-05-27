@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+
 # OpenShift
 
 This example deploy Kibana 8.5.1 on [OpenShift][] using [custom values][].

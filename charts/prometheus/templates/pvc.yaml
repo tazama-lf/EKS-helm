@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 {{- if not .Values.server.statefulSet.enabled -}}
 {{- if .Values.server.persistentVolume.enabled -}}
 {{- if not .Values.server.persistentVolume.existingClaim -}}

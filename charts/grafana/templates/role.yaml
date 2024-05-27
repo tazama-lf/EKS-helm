@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 {{- if and .Values.rbac.create (not .Values.rbac.useExistingRole) -}}
 apiVersion: {{ include "grafana.rbac.apiVersion" . }}
 kind: Role

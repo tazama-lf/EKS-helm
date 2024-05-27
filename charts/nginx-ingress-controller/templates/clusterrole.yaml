@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 {{- if .Values.rbac.create }}
 
 {{- if and .Values.rbac.scope (not .Values.controller.scope.enabled) -}}

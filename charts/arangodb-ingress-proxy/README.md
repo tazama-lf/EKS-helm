@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+
 # Introduction
 
 Kubernetes ArangoDB Ingress for custom certificates.

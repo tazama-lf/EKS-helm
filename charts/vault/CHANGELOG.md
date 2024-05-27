@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+
 ## Unreleased
 
 ## 0.24.0 (April 6, 2023)
