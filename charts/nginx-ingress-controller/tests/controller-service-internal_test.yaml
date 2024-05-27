@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 suite: Controller > Service > Internal
 templates:
   - controller-service-internal.yaml

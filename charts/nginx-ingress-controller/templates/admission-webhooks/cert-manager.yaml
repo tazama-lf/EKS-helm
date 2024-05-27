@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 {{- if and .Values.controller.admissionWebhooks.enabled .Values.controller.admissionWebhooks.certManager.enabled -}}
 {{- if not .Values.controller.admissionWebhooks.certManager.issuerRef -}}
 # Create a selfsigned Issuer, in order to create a root CA certificate for

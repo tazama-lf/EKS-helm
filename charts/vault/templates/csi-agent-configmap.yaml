@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 {{- template "vault.csiEnabled" . -}}
 {{- if and (.csiEnabled) (eq (.Values.csi.agent.enabled | toString) "true") -}}
 apiVersion: v1

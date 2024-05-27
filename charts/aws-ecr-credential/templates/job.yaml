@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 {{- if ne .Values.mode "register" }}
 apiVersion: batch/v1
 kind: Job

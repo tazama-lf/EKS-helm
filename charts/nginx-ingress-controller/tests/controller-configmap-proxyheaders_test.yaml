@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 suite: Controller > ConfigMap > Proxy Headers
 templates:
   - controller-configmap-proxyheaders.yaml

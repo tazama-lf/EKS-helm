@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+
 # OSS
 
 This example deploy Logstash 8.5.1 using [Logstash OSS][] version.

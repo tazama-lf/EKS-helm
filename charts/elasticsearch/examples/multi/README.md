@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+
 # Multi
 
 This example deploy an Elasticsearch 8.5.1 cluster composed of 3 different Helm

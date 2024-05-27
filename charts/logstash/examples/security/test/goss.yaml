@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 mount:
   /usr/share/logstash/data:
     exists: true

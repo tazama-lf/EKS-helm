@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 {{- if and .Values.controller.prometheus.enabled .Values.controller.prometheus.alertingrules }}
 ---
 apiVersion: monitoring.coreos.com/v1

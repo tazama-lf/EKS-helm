@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+
 # Upgrade
 
 This example will deploy Kibana chart using an old chart version,

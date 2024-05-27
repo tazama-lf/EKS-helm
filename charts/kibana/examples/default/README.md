@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+
 # Default
 
 This example deploy Kibana 8.5.1 using [default values][].
