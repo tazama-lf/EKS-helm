@@ -17,13 +17,13 @@ data "aws_availability_zones" "available" {
 }
 
 locals {
-  cluster_name = "tazama-eks-${random_string.suffix.result}"
+  cluster_name = "tazama-eks"
 }
 
-resource "random_string" "suffix" {
-  length  = 8
-  special = false
-}
+# resource "random_string" "suffix" {
+#   length  = 8
+#   special = false
+# }
 
 
 #####################################
@@ -80,22 +80,22 @@ module "eks" {
 
   eks_managed_node_groups = {
     one = {
-      name = "node-group-1"
+      name = "application"
 
-      instance_types = [var.vm_size]
+      instance_types = ["m5.xlarge"]
 
       min_size     = 1
       max_size     = 3
-      desired_size = 2
+      desired_size = 3
     }
 
     two = {
-      name = "node-group-2"
+      name = "system"
 
-      instance_types = [var.vm_size]
+      instance_types = ["c7i.xlarge"]
 
       min_size     = 1
-      max_size     = 2
+      max_size     = 1
       desired_size = 1
     }
   }
