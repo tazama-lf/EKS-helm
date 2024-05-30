@@ -121,7 +121,7 @@ Our repository list includes a variety of components, each representing specific
 - `rule-091`
 - `jenkins-inbound-agent`
 - `jenkins`
-- `channel-router-setup-processor`
+- `event-director`
 - `event-sidecar`
 - `lumberjack`
 - `tms-service`
@@ -808,7 +808,7 @@ After importing the Jenkins jobs, you need to configure each job with the approp
 
 2. **Repository Configuration:**
 
-- Set the **Repository URL** to the Git repository where the code for the processor is located. This is typically a URL like https://github.com/<Repository>/channel-router-setup-processor/.
+- Set the **Repository URL** to the Git repository where the code for the processor is located. This is typically a URL like https://github.com/<Repository>/event-director/.
 - Under Credentials, select the appropriate credentials from the drop-down list, such as **Github Creds**, which should correspond to the credentials that have access to the repository.
 
 3. **Kubernetes Configuration:**
