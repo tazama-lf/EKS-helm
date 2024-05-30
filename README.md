@@ -73,9 +73,9 @@
 
 Read through the infrastructure spec before starting with the deployment guide.
 
-[Infrastructure Spec for Tazama Sandbox](../../set-up-the-environment/system-setup-on-azure-with-different-reserve-pricings/infrastructure-spec-for-tazama-sandbox.md)
+[Infrastructure Spec for Tazama Sandbox](https://github.com/frmscoe/docs/blob/main/Technical/Environment-Setup/Infrastructure/Infrastructure-Spec-For-Tazama.md)
 
-[Infrastructure Spec for Tazama](../../set-up-the-environment/system-setup-on-azure-with-different-reserve-pricings/infrastructure-spec-for-tazama.md)
+[Infrastructure Spec for Tazama](https://github.com/frmscoe/docs/blob/main/Technical/Environment-Setup/Infrastructure/Infrastructure-Spec-For-Tazama.md)
 
 **Important:** Access to the Tazama GIT Repository is required to proceed. If you do not currently have this access, or if you are unsure about your access level, please reach out to the Tazama Team to request the necessary permissions. It's crucial to ensure that you have the appropriate credentials to access the repository for seamless integration and workflow management.
 
@@ -379,6 +379,8 @@ Each of these components plays a critical role in the Tazama system. By carefull
 
 In order to get the processor pods to write logs to the lumberjack deployment which then writes the log information to elasticsearch. 
 
+[Logging Data View](https://github.com/frmscoe/docs/blob/main/Technical/Logging/Logging-Data-View.md)
+
 1. There is a secret that is created for elasticsearch after the HELM install. Duplicate the one created by elasticsearch.
 2. Change the namespace for `development` to `processor`
 
@@ -516,7 +518,7 @@ If is set `LogLevel`to info, error etc.. in your Jenkins environment variables t
 
 For comprehensive instructions on how to configure logging to Elasticsearch, please refer to the accompanying document. It provides a step-by-step guide that covers all the necessary procedures to ensure your logging system is properly set up, capturing and forwarding logs to Elasticsearch. This includes configuring log shippers, setting up Elasticsearch indices, and establishing the necessary security and access controls. By following this documentation, you can enable efficient log management and monitoring for your services.
 
-[Logging Data View](../../set-up-the-environment/elasticsearch/logging-data-view.md)
+[Logging Data View](https://github.com/frmscoe/docs/blob/main/Technical/Logging/Logging-Data-View.md)
 
 ## APM Configuration
 
@@ -524,7 +526,7 @@ If is set `APMActive` to **true (default:true)** in your Jenkins environment var
 
 Once configured, the APM tool will begin collecting data on application performance metrics, such as response times, error rates, and throughput, which are critical for identifying and resolving performance issues. The collected data is sent to the APM server, where it can be visualized and analyzed. For detailed steps on integrating and configuring APM with your Jenkins environment, please refer to the specific APM setup documentation provided in your APM tool's resources.
 
-[https://frmscoe.atlassian.net/wiki/spaces/FRMS/pages/137330723/APM+Setup](https://frmscoe.atlassian.net/wiki/spaces/FRMS/pages/137330723/APM+Setup)
+[Setting Up Elastic APM](https://github.com/frmscoe/docs/blob/dev/Technical/Logging/Setting-Up-Elastic-APM.md)
 
 ## Jenkins Configuration
 
@@ -670,7 +672,7 @@ Once you've added this managed file, Jenkins can use it in various jobs that req
 
 Please follow the following document to help you build and push the image to the container registry.
 
-[Building the Jenkins Agent Image](../../../frms-platform-developers-documentation/knowledge-articles/building-the-jenkins-agent-image.md)
+[Building the Jenkins Agent Image](https://github.com/frmscoe/docs/blob/main/Technical/Release-Management/building-the-jenkins-image.md)
 
 ### Setting up a Jenkins cloud agent that will interact with your Kubernetes cluster
 
@@ -694,6 +696,8 @@ Please follow the following document to help you build and push the image to the
 ![image-20240212-112102.png](./Images/image-20240212-112102.png)
 
 **Add a Container**: In this part of the configuration, you define the container that will run inside the pod created from the pod template.
+
+**NOTE** This needs to point to the docker image built in this step : [Building the Jenkins Agent Image](https://github.com/frmscoe/docs/blob/main/Technical/Release-Management/building-the-jenkins-image.md)
 
 - **Name**: The container name is set to `jnlp`. This is a conventional name for a Jenkins agent container that uses the JNLP (Java Network Launch Protocol) for the master-agent communication.
 - **Docker Image**: The Docker image to use is [example.io/jenkins-inbound-agent:1.0.0](http://example.io/jenkins-inbound-agent:1.0.0) . This image is pre-configured with all the necessary tools to run as a Jenkins agent.
