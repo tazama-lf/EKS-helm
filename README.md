@@ -75,9 +75,9 @@
 
 Read through the infrastructure spec before starting with the deployment guide.
 
-[Infrastructure Spec for Tazama Sandbox](../../set-up-the-environment/system-setup-on-azure-with-different-reserve-pricings/infrastructure-spec-for-tazama-sandbox.md)
+[Infrastructure Spec for Tazama Sandbox](https://github.com/frmscoe/docs/blob/main/Technical/Environment-Setup/Infrastructure/Infrastructure-Spec-For-Tazama.md)
 
-[Infrastructure Spec for Tazama](../../set-up-the-environment/system-setup-on-azure-with-different-reserve-pricings/infrastructure-spec-for-tazama.md)
+[Infrastructure Spec for Tazama](https://github.com/frmscoe/docs/blob/main/Technical/Environment-Setup/Infrastructure/Infrastructure-Spec-For-Tazama.md)
 
 **Important:** Access to the Tazama GIT Repository is required to proceed. If you do not currently have this access, or if you are unsure about your access level, please reach out to the Tazama Team to request the necessary permissions. It's crucial to ensure that you have the appropriate credentials to access the repository for seamless integration and workflow management.
 
@@ -87,46 +87,47 @@ Our repository list includes a variety of components, each representing specific
 
 **Repository list:**
 
-- `rule-001`
-- `rule-002`
-- `rule-003`
-- `rule-004`
-- `rule-006`
-- `rule-007`
-- `rule-008`
-- `rule-010`
-- `rule-011`
-- `rule-016`
-- `rule-017`
-- `rule-018`
-- `rule-021`
-- `rule-024`
-- `rule-025`
-- `rule-026`
-- `rule-027`
-- `rule-028`
-- `rule-030`
-- `rule-044`
-- `rule-045`
-- `rule-048`
-- `rule-054`
-- `rule-063`
-- `rule-074`
-- `rule-075`
-- `rule-076`
-- `rule-078`
-- `rule-083`
-- `rule-084`
-- `rule-090`
-- `rule-091`
+Default `release version`: **rel-1-0-0**
+
+- `rule-001-<release version>-<envName variable set in jenkins>`
+- `rule-002-<release version>-<envName variable set in jenkins>`
+- `rule-003-<release version>-<envName variable set in jenkins>`
+- `rule-004-<release version>-<envName variable set in jenkins>`
+- `rule-006-<release version>-<envName variable set in jenkins>`
+- `rule-007-<release version>-<envName variable set in jenkins>`
+- `rule-008-<release version>-<envName variable set in jenkins>`
+- `rule-010-<release version>-<envName variable set in jenkins>`
+- `rule-011-<release version>-<envName variable set in jenkins>`
+- `rule-016-<release version>-<envName variable set in jenkins>`
+- `rule-017-<release version>-<envName variable set in jenkins>`
+- `rule-018-<release version>-<envName variable set in jenkins>`
+- `rule-021-<release version>-<envName variable set in jenkins>`
+- `rule-024-<release version>-<envName variable set in jenkins>`
+- `rule-025-<release version>-<envName variable set in jenkins>`
+- `rule-026-<release version>-<envName variable set in jenkins>`
+- `rule-027-<release version>-<envName variable set in jenkins>`
+- `rule-028-<release version>-<envName variable set in jenkins>`
+- `rule-030-<release version>-<envName variable set in jenkins>`
+- `rule-044-<release version>-<envName variable set in jenkins>`
+- `rule-045-<release version>-<envName variable set in jenkins>`
+- `rule-048-<release version>-<envName variable set in jenkins>`
+- `rule-054-<release version>-<envName variable set in jenkins>`
+- `rule-063-<release version>-<envName variable set in jenkins>`
+- `rule-074-<release version>-<envName variable set in jenkins>`
+- `rule-075-<release version>-<envName variable set in jenkins>`
+- `rule-076-<release version>-<envName variable set in jenkins>`
+- `rule-078-<release version>-<envName variable set in jenkins>`
+- `rule-083-<release version>-<envName variable set in jenkins>`
+- `rule-084-<release version>-<envName variable set in jenkins>`
+- `rule-090-<release version>-<envName variable set in jenkins>`
+- `rule-091-<release version>-<envName variable set in jenkins>`
 - `jenkins-inbound-agent`
-- `jenkins`
-- `channel-router-setup-processor`
-- `event-sidecar`
-- `lumberjack`
-- `tms-service`
-- `transaction-aggregation-decisioning-processor`
-- `typology-processor`
+- `channel-router-setup-processor-<release version>-<envName variable set in jenkins>`
+- `event-sidecar-<release version>`
+- `lumberjack-<envName variable set in jenkins>`
+- `tms-service-<release version>-<envName variable set in jenkins>`
+- `transaction-aggregation-decisioning-processor-<release version>-<envName variable set in jenkins>`
+- `typology-processor-<release version>-<envName variable set in jenkins>`
 
 # Step 1 - Helm charts
 
@@ -181,9 +182,7 @@ First, add the Tazama Helm repository to enable the installation of charts:
 
 **Optional** - Please note that these are additional features; while not required, they can enhance the platform's capabilities. Implementing them is optional and will not hinder the basic operation or the end-to-end functionality of the platform.
 
-**ie:** Another HELM chart exists for the clustered version of ArangoDB, as mentioned on the linked page. However, the single deployment version is preferred over the clustered one because it includes functionality that is absent or required in the enterprise option.
-
-[https://frmscoe.atlassian.net/wiki/spaces/FRMS/pages/34766856](https://frmscoe.atlassian.net/wiki/spaces/FRMS/pages/34766856)
+**ie:** Another HELM chart exists for the clustered version of ArangoDB. However, the single deployment version is preferred over the clustered one because it includes functionality that is absent or required in the enterprise option.
 
 ### Repo
 
@@ -211,6 +210,7 @@ To expose services outside your cluster, enable ingress on necessary charts:
 1. Kibana
 2. ArangoDb
 3. Jenkins
+4. TMS
 
 ```bash
 helm install kibana Tazama/kibana --namespace=development --set ingress.enabled=true
@@ -247,6 +247,8 @@ helm install nats Tazama/nats --namespace=development
 **Setup Notes for Deploying AWS ECR Credentials with Helm**
 
 To deploy the AWS ECR credentials using our Helm chart, you will need to provide the ECR registry URL, your access key ID, and your secret access key. These are sensitive credentials that allow Kubernetes to pull your container images from AWS ECR. This installation will create the **frmpullsecrets** that will be used to pull images from the ECR.
+
+https://docs.aws.amazon.com/AmazonECR/latest/userguide/registry_auth.html
 
 1. **Obtain AWS ECR Registry URL**:
 
@@ -375,6 +377,31 @@ Each of these components plays a critical role in the Tazama system. By carefull
 
 # Step 3: Post-Installation Configuration
 
+## Elasticsearch Kube Secret for LumberJack
+
+In order to get the processor pods to write logs to the lumberjack deployment which then writes the log information to elasticsearch. 
+
+[Logging Data View](https://github.com/frmscoe/docs/blob/main/Technical/Logging/Logging-Data-View.md)
+
+1. There is a secret that is created for elasticsearch after the HELM install. Duplicate the one created by elasticsearch.
+2. Change the namespace for `development` to `processor`
+
+**Example**
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: elasticsearch-master-certs
+  namespace: processor
+type: kubernetes.io/tls
+data:
+  ca.crt: >-
+  tls.crt: >-
+  tls.key: >-
+
+```
+
 ## Setting up TLS for Ingress
 
 Secure your ingress with TLS by creating a tlscomsecret in each required namespace:
@@ -427,6 +454,55 @@ spec:
 
 ```
 
+
+**Please see the TMS example below:**
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: test-ingress
+  namespace: processor
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/backend-protocol: HTTP
+    nginx.ingress.kubernetes.io/cors-allow-headers: X-Forwarded-For
+    nginx.ingress.kubernetes.io/proxy-body-size: 50m
+    nginx.ingress.kubernetes.io/use-regex: 'true'
+spec:
+  tls:
+    - hosts:
+        - example.test.com
+      secretName: tlscomsecret
+  rules:
+    - host: example.test.com
+      http:
+        paths:
+          - path: /execute
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: transaction-monitoring-service-rel-1-0-0
+                port:
+                  number: 3000
+          - path: /
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: transaction-monitoring-service-rel-1-0-0
+                port:
+                  number: 3000
+          - path: /natsPublish
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: nats-utilities-rel-1-0-0
+                port:
+                  number: 3000
+
+
+```
+
 ## Vault Configuration
 
 After installing the Vault chart, you'll need to initialize and unseal Vault manually. The process involves generating unseal keys and a root token which you'll use to access and configure Vault further.
@@ -444,7 +520,7 @@ If is set `LogLevel`to info, error etc.. in your Jenkins environment variables t
 
 For comprehensive instructions on how to configure logging to Elasticsearch, please refer to the accompanying document. It provides a step-by-step guide that covers all the necessary procedures to ensure your logging system is properly set up, capturing and forwarding logs to Elasticsearch. This includes configuring log shippers, setting up Elasticsearch indices, and establishing the necessary security and access controls. By following this documentation, you can enable efficient log management and monitoring for your services.
 
-[Logging Data View](../../set-up-the-environment/elasticsearch/logging-data-view.md)
+[Logging Data View](https://github.com/frmscoe/docs/blob/main/Technical/Logging/Logging-Data-View.md)
 
 ## APM Configuration
 
@@ -452,7 +528,7 @@ If is set `APMActive` to **true (default:true)** in your Jenkins environment var
 
 Once configured, the APM tool will begin collecting data on application performance metrics, such as response times, error rates, and throughput, which are critical for identifying and resolving performance issues. The collected data is sent to the APM server, where it can be visualized and analyzed. For detailed steps on integrating and configuring APM with your Jenkins environment, please refer to the specific APM setup documentation provided in your APM tool's resources.
 
-[https://frmscoe.atlassian.net/wiki/spaces/FRMS/pages/137330723/APM+Setup](https://frmscoe.atlassian.net/wiki/spaces/FRMS/pages/137330723/APM+Setup)
+[Setting Up Elastic APM](https://github.com/frmscoe/docs/blob/main/Technical/Logging/Setting-Up-Elastic-APM.md)
 
 ## Jenkins Configuration
 
@@ -472,6 +548,21 @@ Credentials are critical for Jenkins to interact with other services like source
 8. Click **Save**.
 
 #### Container Registry Credentials
+
+To retrieve your ECR creditials for the aws user you can follow this guide:
+
+[ECR documentation](https://docs.aws.amazon.com/AmazonECR/latest/userguide/registry_auth.html)
+
+Or run this command to retrieve your token:
+
+aws ecr get-login-password --region < --region of the ECR>
+
+The above comand will print out a token copy that token which is used as your password.
+
+**Example**
+
+Username: AWS
+Password: <TOKEN>
 
 1. Follow the first two steps as above to navigate to the Add Credentials page.
 2. Select **Username with password.**
@@ -497,7 +588,7 @@ To configure Jenkins to use Kubernetes secrets for authenticating with Kubernete
 1. **Retrieve the Kubernetes Token**:
 
 - Access your Kubernetes environment and locate the secret intended for Jenkins authentication, in this case, `scjenkins-secret`.
-  - Extract the token value from the secret, which is usually base64-encoded. You may need to decode it if necessary.
+  - Extract the token value from the secret, which is usually base64-encoded. You have need to decode.
 
 1. **Add Secret in Jenkins**:
 
@@ -583,7 +674,7 @@ Once you've added this managed file, Jenkins can use it in various jobs that req
 
 Please follow the following document to help you build and push the image to the container registry.
 
-[Building the Jenkins Agent Image](../../../frms-platform-developers-documentation/knowledge-articles/building-the-jenkins-agent-image.md)
+[Building the Jenkins Agent Image](https://github.com/frmscoe/docs/blob/main/Technical/Release-Management/building-the-jenkins-image.md)
 
 ### Setting up a Jenkins cloud agent that will interact with your Kubernetes cluster
 
@@ -607,6 +698,8 @@ Please follow the following document to help you build and push the image to the
 ![image-20240212-112102.png](./Images/image-20240212-112102.png)
 
 **Add a Container**: In this part of the configuration, you define the container that will run inside the pod created from the pod template.
+
+**NOTE** This needs to point to the docker image built in this step : [Building the Jenkins Agent Image](https://github.com/frmscoe/docs/blob/main/Technical/Release-Management/building-the-jenkins-image.md)
 
 - **Name**: The container name is set to `jnlp`. This is a conventional name for a Jenkins agent container that uses the JNLP (Java Network Launch Protocol) for the master-agent communication.
 - **Docker Image**: The Docker image to use is [example.io/jenkins-inbound-agent:1.0.0](http://example.io/jenkins-inbound-agent:1.0.0) . This image is pre-configured with all the necessary tools to run as a Jenkins agent.
@@ -688,6 +781,10 @@ The same reasoning applies to passwords are that explicitly stated to need a sin
 - `ArangoTransactionHistoryURL`: Endpoint for the ArangoDB transaction history Database.
   - **value:** [http://arango.development.svc.cluster.local:8529](http://arango.development.svc.cluster.local:8529)
 - `ArangoTransactionHistoryPassword`: A secret password required for accessing the Database. **NB:** The single quotes need to be added with your password.
+  - **eg:** 'rm\]ukXyA@M'
+- `ArangoEvaluationURL`: Endpoint for the ArangoDB Evalation Database.
+  - **value:** [http://arango.development.svc.cluster.local:8529](http://arango.development.svc.cluster.local:8529)
+- `ArangoEvaluationPassword`: A secret password required for accessing the Database. **NB:** The single quotes need to be added with your password.
   - **eg:** 'rm\]ukXyA@M'
 - `Branch`: The specific branch in source control that the deployment should target.
   - **value:** main
@@ -812,6 +909,8 @@ After importing the Jenkins jobs, you need to configure each job with the approp
 - Under Credentials, select the appropriate credentials from the drop-down list, such as **Github Creds**, which should correspond to the credentials that have access to the repository.
 
 3. **Kubernetes Configuration:**
+   
+**NOTE-** The Kubernetes server endpoint can be copied from your .kubeconfig file under cluster -> server
 
 - Check the option for **Setup Kubernetes CLI (kubectl**) if not already done.
 - Input the **Kubernetes server endpoint**; this is the API server URL of your Kubernetes cluster.
@@ -955,6 +1054,61 @@ When encountering authentication errors during a Jenkins build process that invo
 - Check the Jenkins system logs and the specific job's console output for more detailed error messages that can provide additional context for the failure.
 
 By following these steps, you can address the authentication issues that are causing the Jenkins build process to fail, ensuring a successful connection to Kubernetes and Docker registry services.
+
+### Jenkins Build Agent terminating and restarting
+
+If for some reason the jenkins agent starts up on your kubernetes instance and then termnates and restarts. You might need to change to frmpullsecret with namespace`cicd`to .dockerconfigjson data instead of the AWS data.
+
+[ECR documentation](https://docs.aws.amazon.com/AmazonECR/latest/userguide/registry_auth.html)
+
+Or run this command to retrieve your token:
+
+aws ecr get-login-password --region <--Region of the ECR>
+
+The above comand will print out a token copy that token which is used as your password.
+
+**Docker Config JSON: Understanding the** `auth` **Field**
+
+The `auth` field in the `.dockerconfigjson` file is a base64-encoded string that combines your Docker registry username and password in the format `username:password`. Here's how you can construct it:
+
+**Steps to Construct the** `auth` **Field**
+
+1. **Combine the Username and Password**
+
+   Format the string as `username:password`. For example, your username is `AWS` and your password is `yourpassword`.
+
+2. **Base64 Encode the String**
+
+You can use a command-line tool like `base64` or an online base64 encoder to encode the string.
+
+Using a command-line tool:
+
+```sh
+echo -n 'AWS:yourpassword' | base64
+```
+
+This will produce a base64-encoded string, which you then place in the auth field.
+
+Here is an example of what the .dockerconfigjson data in the secret file might look like after encoding:
+
+```json
+{"auths":{"registory":{"username":"AWS","password":"token","email":"no@email.local","auth":"QVdTOnlvdXJwYXNzd29yZA=="}}}
+
+```
+
+**Please see the example below:**
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: frmpullsecret
+  namespace: cicd
+type: kubernetes.io/dockerconfigjson
+data:
+  .dockerconfigjson: >-
+```
+
 
 # Conclusion: Finalizing Tazama System Installation
 
