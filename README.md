@@ -83,7 +83,7 @@ Read through the infrastructure spec before starting with the deployment guide.
 
 ## List of Repositories for ECR Setup
 
-Our repository list includes a variety of components, each representing specific microservices and tools within our ecosystem.
+Our repository list includes a variety of components, each representing specific microservices and tools within our ecosystem. You need to create these in your AWS env in the ECR service.
 
 **Repository list:**
 
@@ -406,7 +406,11 @@ data:
 
 Secure your ingress with TLS by creating a tlscomsecret in each required namespace:
 
-1. Create a secret with your TLS certificate and key:
+You can generate a self-signed certificate and private key with this command;
+
+`openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout tls.key -out tls.crt -subj "/CN=${HOST}/O=${HOST}" -addext "subjectAltName = DNS:${HOST}"`
+
+1. Create a secret with your TLS certificate and key;
 
 ```nano
 apiVersion: v1
@@ -419,6 +423,12 @@ data:
   tls.crt: <base64-encoded-cert>
   tls.key: <base64-encoded-key>
 ```
+
+Or
+
+You can use kubectl to create the secret by running the command below;
+
+`kubectl create secret tlscomsecret ${CERT_NAME} --key tls.key --cert tls.crt -n development`
 
 2. Apply this configuration for each relevant namespace (`development`, `processor`, `cicd`, `default`).
 
@@ -531,6 +541,16 @@ Once configured, the APM tool will begin collecting data on application performa
 [Setting Up Elastic APM](https://github.com/frmscoe/docs/blob/main/Technical/Logging/Setting-Up-Elastic-APM.md)
 
 ## Jenkins Configuration
+
+### Accessing Jenkins UI
+
+The following sections of the guide require you to work within the Jenkins UI. You can either access the UI through a doamin if you configured an ingress or by port forwarding.
+
+Port forward Jenkins to be accessible on localhost:8080 by running:
+  `kubectl --namespace cicd port-forward svc/jenkins 8080:8080`
+
+Get your 'admin' user password by running:
+  `kubectl exec --namespace cicd -it svc/jenkins -c jenkins -- /bin/cat /run/secrets/additional/chart-admin-password && echo`
 
 ### Adding Credentials in Jenkins
 
