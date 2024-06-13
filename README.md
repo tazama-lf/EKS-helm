@@ -122,7 +122,7 @@ Default `release version`: **rel-1-0-0**
 - `rule-090-<release version>-<envName variable set in jenkins>`
 - `rule-091-<release version>-<envName variable set in jenkins>`
 - `jenkins-inbound-agent`
-- `channel-router-setup-processor-<release version>-<envName variable set in jenkins>`
+- `event-director-<release version>-<envName variable set in jenkins>`
 - `event-sidecar-<release version>`
 - `lumberjack-<envName variable set in jenkins>`
 - `tms-service-<release version>-<envName variable set in jenkins>`
@@ -905,7 +905,7 @@ After importing the Jenkins jobs, you need to configure each job with the approp
 
 2. **Repository Configuration:**
 
-- Set the **Repository URL** to the Git repository where the code for the processor is located. This is typically a URL like https://github.com/<Repository>/channel-router-setup-processor/.
+- Set the **Repository URL** to the Git repository where the code for the processor is located. This is typically a URL like https://github.com/<Repository>/event-director/.
 - Under Credentials, select the appropriate credentials from the drop-down list, such as **Github Creds**, which should correspond to the credentials that have access to the repository.
 
 3. **Kubernetes Configuration:**
