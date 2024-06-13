@@ -276,7 +276,7 @@ helm install aws-ecr Tazama/aws-ecr-credential \\
 
 **Caution**: Never expose your AWS access key ID or secret access key in version control or in a public setting.
 
-![image-20240216-063130.png](./Images/image-20240216-063130.png)
+![image-20240216-063130.png](./images/image-20240216-063130.png)
 
 
 For optional components like Grafana, Prometheus, Vault, and KeyCloak, use similar commands if you decide to implement these features.
@@ -521,8 +521,8 @@ After installing the Vault chart, you'll need to initialize and unseal Vault man
 
 [https://developer.hashicorp.com/vault/docs/concepts/seal](https://developer.hashicorp.com/vault/docs/concepts/seal)
 
-![](./Images/Vault_Operator_Init.PNG)
-![](./Images/Sign_In_With_Token.PNG)
+![](./images/Vault_Operator_Init.PNG)
+![](./images/Sign_In_With_Token.PNG)
 
 ## Logstash Configuration
 
@@ -630,8 +630,8 @@ To configure Jenkins to use Kubernetes secrets for authenticating with Kubernete
 
 Following this process will allow Jenkins jobs to authenticate with Kubernetes using the token stored in the secret, enabling operations that require Kubernetes access or pulling images from private registries linked to your Kubernetes environment.
 
-![image-20240215-150928.png](./Images/image-20240215-150928.png)
-![image-20240215-151159.png](./Images/image-20240215-151159.png)
+![image-20240215-150928.png](./images/image-20240215-150928.png)
+![image-20240215-151159.png](./images/image-20240215-151159.png)
 
 ### Adding Managed Files for NPM Configuration in Jenkins
 
@@ -641,7 +641,7 @@ Following this process will allow Jenkins jobs to authenticate with Kubernetes u
 
 [https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token)
 
-![image-20240212-124706.png](./Images/image-20240212-124706.png)
+![image-20240212-124706.png](./images/image-20240212-124706.png)
 
 The image shows a Jenkins configuration screen for adding a managed file, specifically an NPM config file (npmrc). Here's a breakdown of the steps and fields:
 
@@ -675,7 +675,7 @@ Once you've added this managed file, Jenkins can use it in various jobs that req
 - **Global npm packages to install**: List any npm packages that should be installed globally, **Add** newman
 - **Global npm packages refresh hours**: Define how often Jenkins should update the npm package cache. If set to "0", the cache is updated with every build, otherwise, it's updated at the specified interval in hours (e.g., "72" for every three days).
 
-![image-20240215-061559.png](./Images/image-20240215-061559.png)
+![image-20240215-061559.png](./images/image-20240215-061559.png)
 
 ### Jenkins Docker Installation Configuration
 
@@ -686,7 +686,7 @@ Once you've added this managed file, Jenkins can use it in various jobs that req
   - **Download from** [http://docker.com](http://docker.com) : Opt to have Jenkins download Docker directly from the official Docker website.
   - **Docker version**: Specify which version of Docker Jenkins should install. If you want the most recent version, use "latest". Otherwise, provide a specific version number (e.g., "19.03.12").
 
-![image-20240213-103453.png](./Images/image-20240213-103453.png)
+![image-20240213-103453.png](./images/image-20240213-103453.png)
 
 ### Building Jenkin Agent Locally
 
@@ -707,7 +707,7 @@ Please follow the following document to help you build and push the image to the
 - **Add Jenkins URL**: This should be the internal service URL for Jenkins within your Kubernetes cluster, like `http://jenkins.cicd.svc.cluster.local`
 - **Add Pod Label**: Labels are key-value pairs used for identifying resources within Kubernetes. Here, you should add a label with the key `jenkins` and the value `agent`. This label will be used to associate the built pods with the Jenkins service.
 
-![image-20240212-115316.png](./Images/image-20240212-115316.png)![image-20240212-111931.png](./Images/image-20240212-111931.png)
+![image-20240212-115316.png](./images/image-20240212-115316.png)![image-20240212-111931.png](./images/image-20240212-111931.png)
 
 **Add a Pod Template**: This step involves defining a new pod template, which Jenkins will use to spin up agents on your Kubernetes cluster.
 
@@ -715,7 +715,7 @@ Please follow the following document to help you build and push the image to the
 - **Namespace**: Specify `cicd` as the namespace where the Jenkins agents will be deployed within the Kubernetes cluster.
 - **Labels**: Set `jenkins-agent` as the label. This is a key identifier that Jenkins jobs will use to select this pod template when running builds.
 
-![image-20240212-112102.png](./Images/image-20240212-112102.png)
+![image-20240212-112102.png](./images/image-20240212-112102.png)
 
 **Add a Container**: In this part of the configuration, you define the container that will run inside the pod created from the pod template.
 
@@ -727,7 +727,7 @@ Please follow the following document to help you build and push the image to the
 - **Working Directory**: The working directory is set to `/home/jenkins/agent`. This is the directory inside the container where Jenkins will execute the build steps.
 - **Command to Run**: This field is left blank, which means the default command from the Docker image will be used to start the agent.
 
-![image-20240212-115159.png](./Images/image-20240212-115159.png)
+![image-20240212-115159.png](./images/image-20240212-115159.png)
 
 **Run in Privileged Mode**: This is an advanced container setting that allows processes within the container to execute with elevated privileges, similar to the root user on a Linux system.
 
@@ -736,7 +736,7 @@ To select "Run in Privileged Mode" in Jenkins Kubernetes plugin:
 1. Within the container configuration, look for the "Advanced..." button or link (not visible in the screenshot) and click it to expand the advanced options.
 2. In the advanced settings, find the checkbox labeled "Run in privileged mode" and select it.
 
-![image-20240212-114225.png](./Images/image-20240212-114225.png)
+![image-20240212-114225.png](./images/image-20240212-114225.png)
 
 **Image Pull Secret**
 
@@ -754,7 +754,7 @@ Needs to be set to - **frmpullsecret - see screenshot below**
 
 By properly configuring image pull secrets in your Jenkins Kubernetes pod templates, you enable Jenkins to pull the necessary private images to run your builds within the Kubernetes cluster. Without these secrets, the image pull would fail, and your builds would not be able to run.
 
-![image-20240215-144955.png](./Images/image-20240215-144955.png)
+![image-20240215-144955.png](./images/image-20240215-144955.png)
 
 ### Steps to Configure Jenkins Global Variables
 
@@ -852,7 +852,7 @@ The same reasoning applies to passwords are that explicitly stated to need a sin
 - Provided is a `jobs.zip` file, which contains job configuration files that you need to add to your Jenkins instance.
 - Extract the zip file.
 
-[jobs.zip](./Images/jobs.zip)
+[jobs.zip](./images/jobs.zip)
 
 #### Navigate to Configuration Directory:
 
@@ -866,7 +866,7 @@ cd <path to configuration>
 
 **eg:** cd "C:\Documents\tasks\Jenkins\jobs"
 
-![image-20240220-055517.png](./Images/image-20240220-055517.png)
+![image-20240220-055517.png](./images/image-20240220-055517.png)
 
 #### Copy Jobs to Jenkins Pod:
 
@@ -896,7 +896,7 @@ kubectl rollout restart deployment <jenkins-deployment-name> -n cicd
 
 **eg:** [http://localhost:52933/safeRestart](http://localhost:52933/safeRestart)
 
-![image-20240215-054140.png](./Images/image-20240215-054140.png)
+![image-20240215-054140.png](./images/image-20240215-054140.png)
 
 # Step 4 :Running Jenkins Jobs to Install Processors
 
@@ -910,7 +910,7 @@ The process involves configuring Jenkins to deploy various processors into the T
 
 Run the `Create Arango Setup` and then `Populate Arango Configuration` jobs to populate the ArangoDB with the correct configuration required by the system. This job would utilize the variables set in the global configuration to connect to ArangoDB and perform the necessary setup.
 
-![image-20240215-052351.png](./Images/image-20240215-052351.png)
+![image-20240215-052351.png](./images/image-20240215-052351.png)
 
 ### Edit Jobs: Configuring Credentials and Kubernetes Endpoints in Jenkins
 
@@ -945,9 +945,9 @@ After importing the Jenkins jobs, you need to configure each job with the approp
 
 By completing these steps, you ensure that each Jenkins job can access the necessary repositories and services with the correct permissions and interact with your Kubernetes cluster using the right endpoints and credentials. It's essential to review and verify these settings regularly, especially after any changes to the credentials or infrastructure.
 
-![image-20240213-064147.png](./Images/image-20240213-064147.png)
-![image-20240213-064707.png](./Images/image-20240213-064707.png)
-![image-20240213-064256.png](./Images/image-20240213-064256.png)
+![image-20240213-064147.png](./images/image-20240213-064147.png)
+![image-20240213-064707.png](./images/image-20240213-064707.png)
+![image-20240213-064256.png](./images/image-20240213-064256.png)
 
 ### Deploying to the Cluster:
 
@@ -957,7 +957,7 @@ Run the Jenkins jobs that deploy the processors to the Tazama cluster. These job
 
 Run the **Deploying All Rules and Rule Processors Pipeline Job**
 
-![image-20240212-161403.png](./Images/image-20240212-161403.png)
+![image-20240212-161403.png](./images/image-20240212-161403.png)
 
 ### End-to-End Platform Testing with the "E2E Test" Jenkins Job
 
@@ -980,11 +980,11 @@ The "E2E Test" job in Jenkins is an essential component for ensuring the integri
 - Navigate to the **transactions** collection within the database.
 - Confirm the presence of a transaction record, which signifies a successful end-to-end test execution.
 
-![image-20240213-122427.png](./Images/image-20240213-122427.png)
+![image-20240213-122427.png](./images/image-20240213-122427.png)
 
 # Common Errors**
 
-![image-20240213-144301.png](./Images/image-20240213-144301.png)
+![image-20240213-144301.png](./images/image-20240213-144301.png)
 
 ### Arango ingress error**
 
@@ -994,7 +994,7 @@ To resolve this issue, you would need to:
 2. Add the `tlscomsecret` to the `development` namespace, if it's not already present.
 3. After the secret is correctly placed in the namespace, restart the affected pod by deleting the existing pod. Kubernetes will automatically spin up a new pod which should now successfully mount the required volumes, including the TLS secrets, and run as expected.
 
-![image-20240215-142735.png](./Images/image-20240215-142735.png)![image-20240215-142727.png](./Images/image-20240215-142727.png)
+![image-20240215-142735.png](./images/image-20240215-142735.png)![image-20240215-142727.png](./images/image-20240215-142727.png)
 
 ### Network Access Error in Container Deployment
 
@@ -1010,7 +1010,7 @@ To address the network access error encountered when deploying containers that r
 
 Implementing these steps should help in resolving connectivity issues related to the `arango.development.svc` hostname not being found, facilitating successful POST requests to the specified endpoints.
 
-![image-20240215-143113.png](./Images/image-20240215-143113.png)
+![image-20240215-143113.png](./images/image-20240215-143113.png)
 
 ### Addressing Pod Restart Issues in Kubernetes
 
@@ -1043,9 +1043,9 @@ If you are experiencing problems with your Kubernetes pods that may be related t
 
 By carefully checking your Jenkins environment variables and ensuring the ArangoDB configuration is correct, you can resolve issues leading to pod instability and ensure that your services run smoothly in the Kubernetes environment.
 
-![image-20240215-143411.png](./Images/image-20240215-143411.png)
-![image-20240215-143443.png](./Images/image-20240215-143443.png)
-![image-20240215-143505.png](./Images/image-20240215-143505.png)
+![image-20240215-143411.png](./images/image-20240215-143411.png)
+![image-20240215-143443.png](./images/image-20240215-143443.png)
+![image-20240215-143505.png](./images/image-20240215-143505.png)
 
 ### Addressing Jenkins Build Authentication Errors
 
