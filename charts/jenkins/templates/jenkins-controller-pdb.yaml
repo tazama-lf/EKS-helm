@@ -3,6 +3,7 @@
 {{- if .Values.controller.podDisruptionBudget.enabled }}
 {{- $kubeTargetVersion := default .Capabilities.KubeVersion.GitVersion .Values.kubeTargetVersionOverride }}
 {{- if semverCompare ">=1.21-0" $kubeTargetVersion -}}
+---
 apiVersion: policy/v1
 {{- else if semverCompare ">=1.5-0" $kubeTargetVersion -}}
 apiVersion: policy/v1beta1

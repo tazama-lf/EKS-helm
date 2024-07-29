@@ -22,7 +22,7 @@ keywords:
   - prometheus
   - redis 
   - vault
-home: https://github.com/frmscoe/helm
+home: https://github.com/frmscoe/EKS-helm
 maintainers:
   - name: kyle
     email: kyle.vorster@sybrin.com
