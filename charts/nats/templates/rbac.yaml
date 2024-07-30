@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 {{- if or (.Values.nats.serviceAccount.create) (and .Values.nats.externalAccess .Values.nats.advertise) }}
 ---
 apiVersion: v1

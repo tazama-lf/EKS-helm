@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 {{- if .Values.ingress.enabled }}
 {{- $fullName := include "alertmanager.fullname" . }}
 {{- $svcPort := .Values.service.port }}

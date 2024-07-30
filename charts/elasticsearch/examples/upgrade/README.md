@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+
 # Upgrade
 
 This example will deploy a 3 node Elasticsearch cluster chart using an old chart

@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+
 # Docker for Mac
 
 This example deploy a 3 nodes Elasticsearch 8.5.1 cluster on [Docker for Mac][]

@@ -1,4 +1,7 @@
+# SPDX-License-Identifier: Apache-2.0
+
 {{- if .Values.controller.backendconfig.enabled }}
+---
 apiVersion: {{ .Values.controller.backendconfig.apiVersion }}
 kind: BackendConfig
 metadata:

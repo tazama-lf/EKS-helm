@@ -1,5 +1,7 @@
-{{- $jenkinsHome := .Values.controller.jenkinsHome -}}
+# SPDX-License-Identifier: Apache-2.0
 
+{{- $jenkinsHome := .Values.controller.jenkinsHome -}}
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:

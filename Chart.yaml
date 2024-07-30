@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 apiVersion: v2
 name: FRMS
 version: 1.0.0
@@ -20,7 +22,7 @@ keywords:
   - prometheus
   - redis 
   - vault
-home: https://github.com/frmscoe/helm
+home: https://github.com/frmscoe/EKS-helm
 maintainers:
   - name: kyle
     email: kyle.vorster@sybrin.com

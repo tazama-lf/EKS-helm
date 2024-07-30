@@ -1,4 +1,7 @@
+# SPDX-License-Identifier: Apache-2.0
+
 {{- if .Values.controller.agentListenerEnabled }}
+---
 apiVersion: v1
 kind: Service
 metadata:

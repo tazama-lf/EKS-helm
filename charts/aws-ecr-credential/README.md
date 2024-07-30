@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+
 # aws-ecr-credential
 
 This Chart seemlessly integrate Kubernetes with AWS ECR

@@ -1,781 +1,1145 @@
-# helm
-All the helm charts for running the FRMS platform
+<!-- SPDX-License-Identifier: Apache-2.0 -->
 
-link to deployment documentation - https://frmscoe.atlassian.net/wiki/spaces/FRMS/pages/40566785/FRMS+EKS+Deployment+Guide
+# EKS Detailed Installation Guide
 
-Step 1 : Helm charts 
-In this section we will be running through the initial setup of FRMS on a cluster. A helm subchart will be used to install multiple setups for all the different helm files based in one subchart for easier installation, these will include services , ingresses , pods, replicate-sets etc… 
+**This article will be an end-to-end guide for installing Tazama to any cluster but only once your EKS infrastructure is setup**.
 
-Namespaces that need to be added to your cluster:
+# Instructions
 
-cicd
+- [EKS Detailed Installation Guide](#eks-detailed-installation-guide)
+- [Instructions](#instructions)
+  - [List of Repositories for ECR Setup](#list-of-repositories-for-ecr-setup)
+- [Step 1 - Helm charts](#step-1---helm-charts)
+  - [Overview](#overview)
+  - [Prerequisites](#prerequisites)
+  - [Adding Required Namespaces](#adding-required-namespaces)
+  - [Helm Repository Setup](#helm-repository-setup)
+    - [Repo](#repo)
+    - [Helm Repository Setup](#helm-repository-setup-1)
+    - [Ingress Setup](#ingress-setup)
+    - [Installing Helm Charts](#installing-helm-charts)
+    - [Uninstalling Charts](#uninstalling-charts)
+- [Step 2 : Configuration](#step-2--configuration)
+  - [1. NATS](#1-nats)
+  - [2. ElasticSearch](#2-elasticsearch)
+  - [3. ArangoDB (Single Deployment)](#3-arangodb-single-deployment)
+  - [4. ArangoDB Ingress Proxy](#4-arangodb-ingress-proxy)
+  - [5. Jenkins](#5-jenkins)
+  - [6. Redis-Cluster](#6-redis-cluster)
+  - [7. Nginx Ingress Controller](#7-nginx-ingress-controller)
+  - [8. APM, Logstash, Kibana (Elasticsearch)](#8-apm-logstash-kibana-elasticsearch)
+  - [9. Grafana](#9-grafana)
+  - [10. Prometheus](#10-prometheus)
+  - [11. Vault](#11-vault)
+  - [12. KeyCloak](#12-keycloak)
+- [Step 3: Post-Installation Configuration](#step-3-post-installation-configuration)
+  - [Setting up TLS for Ingress](#setting-up-tls-for-ingress)
+  - [Configuring Ingress Domain Names](#configuring-ingress-domain-names)
+  - [Vault Configuration](#vault-configuration)
+  - [Logstash Configuration](#logstash-configuration)
+  - [APM Configuration](#apm-configuration)
+  - [Jenkins Configuration](#jenkins-configuration)
+    - [Adding Credentials in Jenkins](#adding-credentials-in-jenkins)
+      - [GitHub Credentials](#github-credentials)
+      - [Container Registry Credentials](#container-registry-credentials)
+      - [GitHub Read Package Credentials](#github-read-package-credentials)
+      - [Kubernetes Credentials](#kubernetes-credentials)
+    - [Adding Managed Files for NPM Configuration in Jenkins](#adding-managed-files-for-npm-configuration-in-jenkins)
+    - [Jenkins Node.js Configuration](#jenkins-nodejs-configuration)
+    - [Jenkins Docker Installation Configuration](#jenkins-docker-installation-configuration)
+    - [Building Jenkin Agent Locally](#building-jenkin-agent-locally)
+    - [Setting up a Jenkins cloud agent that will interact with your Kubernetes cluster](#setting-up-a-jenkins-cloud-agent-that-will-interact-with-your-kubernetes-cluster)
+    - [Steps to Configure Jenkins Global Variables](#steps-to-configure-jenkins-global-variables)
+    - [Adding Jenkins Jobs](#adding-jenkins-jobs)
+      - [Download the Job Configurations:](#download-the-job-configurations)
+      - [Navigate to Configuration Directory:](#navigate-to-configuration-directory)
+      - [Copy Jobs to Jenkins Pod:](#copy-jobs-to-jenkins-pod)
+      - [Finalize the Setup:](#finalize-the-setup)
+      - [Reload Jenkins Configuration:](#reload-jenkins-configuration)
+- [Step 4 :Running Jenkins Jobs to Install Processors](#step-4-running-jenkins-jobs-to-install-processors)
+    - [Overview](#overview-1)
+    - [Populating ArangoDB:](#populating-arangodb)
+    - [Edit Jobs: Configuring Credentials and Kubernetes Endpoints in Jenkins](#edit-jobs-configuring-credentials-and-kubernetes-endpoints-in-jenkins)
+      - [Configuring Rule Processors:](#configuring-rule-processors)
+    - [Deploying to the Cluster:](#deploying-to-the-cluster)
+    - [End-to-End Platform Testing with the "E2E Test" Jenkins Job](#end-to-end-platform-testing-with-the-e2e-test-jenkins-job)
+      - [Overview of the "E2E Test" Job](#overview-of-the-e2e-test-job)
+      - [Purpose and Benefits](#purpose-and-benefits)
+      - [Running the Test and Post-Test Evaluation](#running-the-test-and-post-test-evaluation)
+- [Common Errors\*\*](#common-errors)
+    - [Arango ingress error\*\*](#arango-ingress-error)
+    - [Network Access Error in Container Deployment](#network-access-error-in-container-deployment)
+    - [Addressing Pod Restart Issues in Kubernetes](#addressing-pod-restart-issues-in-kubernetes)
+    - [Addressing Jenkins Build Authentication Errors](#addressing-jenkins-build-authentication-errors)
+- [Conclusion: Finalizing Tazama System Installation](#conclusion-finalizing-tazama-system-installation)
 
-default
+Read through the infrastructure spec before starting with the deployment guide.
 
-development
+[Infrastructure Spec for Tazama Sandbox](https://github.com/frmscoe/docs/blob/main/Technical/Environment-Setup/Infrastructure/Infrastructure-Spec-For-Tazama.md)
 
-ingress-nginx
+[Infrastructure Spec for Tazama](https://github.com/frmscoe/docs/blob/main/Technical/Environment-Setup/Infrastructure/Infrastructure-Spec-For-Tazama.md)
 
-openfaas
+**Important:** Access to the Tazama GIT Repository is required to proceed. If you do not currently have this access, or if you are unsure about your access level, please reach out to the Tazama Team to request the necessary permissions. It's crucial to ensure that you have the appropriate credentials to access the repository for seamless integration and workflow management.
 
-openfaas-fn
+## List of Repositories for ECR Setup
 
- 
+Our repository list includes a variety of components, each representing specific microservices and tools within our ecosystem. You need to create these in your AWS env in the ECR service.
 
-The list below are the different helm charts:
+**Repository list:**
 
-Openfaas
+Default `release version`: **rel-1-0-0**
 
-Nifi
+- `rule-001-<release version>-<envName variable set in jenkins>`
+- `rule-002-<release version>-<envName variable set in jenkins>`
+- `rule-003-<release version>-<envName variable set in jenkins>`
+- `rule-004-<release version>-<envName variable set in jenkins>`
+- `rule-006-<release version>-<envName variable set in jenkins>`
+- `rule-007-<release version>-<envName variable set in jenkins>`
+- `rule-008-<release version>-<envName variable set in jenkins>`
+- `rule-010-<release version>-<envName variable set in jenkins>`
+- `rule-011-<release version>-<envName variable set in jenkins>`
+- `rule-016-<release version>-<envName variable set in jenkins>`
+- `rule-017-<release version>-<envName variable set in jenkins>`
+- `rule-018-<release version>-<envName variable set in jenkins>`
+- `rule-021-<release version>-<envName variable set in jenkins>`
+- `rule-024-<release version>-<envName variable set in jenkins>`
+- `rule-025-<release version>-<envName variable set in jenkins>`
+- `rule-026-<release version>-<envName variable set in jenkins>`
+- `rule-027-<release version>-<envName variable set in jenkins>`
+- `rule-028-<release version>-<envName variable set in jenkins>`
+- `rule-030-<release version>-<envName variable set in jenkins>`
+- `rule-044-<release version>-<envName variable set in jenkins>`
+- `rule-045-<release version>-<envName variable set in jenkins>`
+- `rule-048-<release version>-<envName variable set in jenkins>`
+- `rule-054-<release version>-<envName variable set in jenkins>`
+- `rule-063-<release version>-<envName variable set in jenkins>`
+- `rule-074-<release version>-<envName variable set in jenkins>`
+- `rule-075-<release version>-<envName variable set in jenkins>`
+- `rule-076-<release version>-<envName variable set in jenkins>`
+- `rule-078-<release version>-<envName variable set in jenkins>`
+- `rule-083-<release version>-<envName variable set in jenkins>`
+- `rule-084-<release version>-<envName variable set in jenkins>`
+- `rule-090-<release version>-<envName variable set in jenkins>`
+- `rule-091-<release version>-<envName variable set in jenkins>`
+- `jenkins-inbound-agent`
+- `event-director-<release version>-<envName variable set in jenkins>`
+- `event-sidecar-<release version>`
+- `lumberjack-<envName variable set in jenkins>`
+- `tms-service-<release version>-<envName variable set in jenkins>`
+- `transaction-aggregation-decisioning-processor-<release version>-<envName variable set in jenkins>`
+- `typology-processor-<release version>-<envName variable set in jenkins>`
 
-ElasticSearch
+# Step 1 - Helm charts
 
-ArangoDB (single deployment)
+## Overview
 
-ArangoDb Ingress Proxy
+This guide will walk you through the setup of the Tazama (Real-time Antifraud and Money Laundering Monitoring System) on a Kubernetes cluster using Helm charts. Helm charts simplify the deployment and management of applications on Kubernetes clusters. We will deploy various services, ingresses, pods, replica sets, and more.
 
-Jenkins
+## Prerequisites
 
-Redis
+- A Kubernetes cluster up and running.
+- Helm installed on your local machine or wherever you plan to run the commands from.
+- Basic understanding of Kubernetes concepts like namespaces, pods, and ingress.
 
-KeyCloak
+## Adding Required Namespaces
 
-Vault
+The installation of our system requires the creation of specific namespaces within your cluster. These namespaces will be automatically created by the infra-chart Helm chart. Ensure these namespaces exist before proceeding:
 
-nginx ingress controller
+- `cicd`
+- `development`
+- `ingress-nginx`
+- `processor`
+- `ecks-ns`
 
-APM (Elasticsearch)
+If they are not created automatically, you can manually add them using the following command for each namespace:
 
-Logstash (Elasticsearch)
+```bash
+kubectl create namespace <namespace-name>
+```
 
- 
+## Helm Repository Setup
 
-ie: There is another HELM chart for the arangodb clustered version which is referenced on the following page. The single deployment version is used instead of the cluster due to functionality missing/needed on the enterprise option.
+First, add the Tazama Helm repository to enable the installation of charts:
 
-ArangoDb Cluster installation 
+**The list below are the different helm charts:**
 
-Repo 
-git@github.com:frmscoe/helm.git
+1. NATS
+2. ElasticSearch
+3. ArangoDB (single deployment)
+4. ArangoDb Ingress Proxy
+5. Jenkins
+6. Redis-Cluster
+7. Nginx ingress
+8. APM (Elasticsearch)
+9. Logstash (Elasticsearch)
+10. Kibana (Elasticsearch)
+11. Infra-chart
+12. aws-ecr-credential
+13. Grafana - **Optional**
+14. Prometheus - **Optional**
+15. Vault - **Optional**
+16. KeyCloak - **Optional**
 
-Add Helm repository
-In your cluster open up a new terminal and run the following commands 
+**Optional** - Please note that these are additional features; while not required, they can enhance the platform's capabilities. Implementing them is optional and will not hinder the basic operation or the end-to-end functionality of the platform.
 
-helm repo add FRMS frmscoe/helm 
+**ie:** Another HELM chart exists for the clustered version of ArangoDB. However, the single deployment version is preferred over the clustered one because it includes functionality that is absent or required in the enterprise option.
 
- 
+### Repo
 
+[https://github.com/frmscoe/EKS-helm](https://github.com/frmscoe/EKS-helm)
+
+### Helm Repository Setup
+
+First, add the Tazama Helm repository to enable the installation of charts:
+
+```bash
+helm repo add Tazama https://frmscoe.github.io/EKS-helm/
 helm repo update
+```
 
- 
+To confirm the FRMS repo has been successfully added:
 
- 
+```bash
+helm search repo Tazama
+```
 
- 
+### Ingress Setup
 
-Install the chart
-Install the helm sub-chart with a release name frmscoe:
+To expose services outside your cluster, enable ingress on necessary charts:
 
-helm install FRMS ./FRMS/helm
+1. Kibana
+2. ArangoDb
+3. Jenkins
+4. TMS
 
- 
+```bash
+helm install kibana Tazama/kibana --namespace=development --set ingress.enabled=true
+...
+```
 
-Extra Information: Helm | Helm Install 
+If you prefer not to configure an ingress controller, you can simply use port forwarding to access the front-end interfaces of your applications. This approach will not impact the end-to-end functionality of your system, as it is designed to utilize **fully qualified domain names** (FQDNs) for internal cluster communication.
 
- 
+### Installing Helm Charts
 
-Uninstalling the chart
-To uninstall/delete the FRMSdeployment:
+The Tazama system is composed of multiple Helm charts for various services and components. These need to be installed in a specific order due to dependencies.
 
-helm uninstall FRMS
+1. **Infra-chart** - Sets up necessary namespaces and storage classes.
 
- 
+```bash
+helm install infra-chart Tazama/infra-chart
+```
 
-Step 2 : Configuration
- 
+2. Follow with the installation of other charts as listed, specifying the namespace as required:
 
-Each chart has defaulted configuration setup to get the platform in the correct state to be used  this includes ports , namespaces , secrets , ingresses and storage to name a few. This step can be skipped if not needed ,the below  is just additional configuration that might be needed if you need additional storage etc…
+```bash
+helm install nginx-ingress-controller Tazama/ingress-nginx --namespace=ingress-nginx
+helm install elasticsearch Tazama/elasticsearch --namespace=development
+helm install kibana Tazama/kibana --namespace=development
+helm install apm Tazama/apm-server --namespace=development
+helm install logstash Tazama/logstash --namespace=development
+helm install arangodb-ingress-proxy Tazama/arangodb-ingress-proxy --namespace=development
+helm install arango Tazama/arangodb --namespace=development
+helm install redis-cluster Tazama/redis-cluster --namespace=development
+helm install jenkins Tazama/jenkins --namespace=cicd
+helm install nats Tazama/nats --namespace=development
+```
 
-NIFI configuration 
-Configure the chart
-The following items can be set via --set flag during installation or configured by editing the values.yaml file directly (need to download the chart first).
+**Setup Notes for Deploying AWS ECR Credentials with Helm**
 
-Configure how to expose nifi service
-Ingress: The ingress controller must be installed in the Kubernetes cluster.
+To deploy the AWS ECR credentials using our Helm chart, you will need to provide the ECR registry URL, your access key ID, and your secret access key. These are sensitive credentials that allow Kubernetes to pull your container images from AWS ECR. This installation will create the **frmpullsecrets** that will be used to pull images from the ECR.
 
-ClusterIP: Exposes the service on a cluster-internal IP. Choosing this value makes the service only reachable from within the cluster.
+https://docs.aws.amazon.com/AmazonECR/latest/userguide/registry_auth.html
 
-NodePort: Exposes the service on each Node’s IP at a static port (the NodePort). You’ll be able to contact the NodePort service, from outside the cluster, by requesting NodeIP:NodePort.
+1. **Obtain AWS ECR Registry URL**:
 
-LoadBalancer: Exposes the service externally using a cloud provider’s load balancer.
+- Navigate to the Amazon ECR console.
+- In the navigation pane, choose 'Repositories'.
+- Select the desired repository.
+- Find the 'URI' for your repository. It will look something like `123456789012.dkr.ecr.region.amazonaws.com/my-repository`.
 
-Configure how to persist data
-Disable: The data does not survive the termination of a pod.
+2. **Obtain AWS Access Key ID and Secret Access Key**:
 
-Persistent Volume Claim(default): A default StorageClass is needed in the Kubernetes cluster to dynamically provision the volumes. Specify another StorageClass in the storageClass or set existingClaim if you have already existing persistent volumes to use.
+- Go to the IAM console.
+- Create a new IAM user or use an existing one with permissions to access the ECR registry.
+- Generate a new access key pair under the user's 'Security credentials' tab.
 
-Configure authentication
-By default, the authentication is a Single-User authentication. You can optionally enable ldap or oidc to provide an external authentication. See the configuration section or doc folder for more details.
+3. **Configure Helm Command**:
 
-Use custom processors
-To add custom processors, the values.yaml file nifi section should contain the following options, where CUSTOM_LIB_FOLDER should be replaced by the path where the libs are:
+- Use the `helm install` command to deploy your chart, substituting in your ECR registry URL and the base64-encoded AWS credentials. For example:
 
+```bash
+helm install aws-ecr Tazama/aws-ecr-credential \\
+  --set aws.ecrRegistry="123456789012.dkr.ecr.region.amazonaws.com/my-repository" \\
+  --set aws.accessKeyId="AKIAIOSFODNN7EXAMPLE" \\
+  --set aws.secretAccessKey="wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+```
 
-  extraVolumeMounts:
-    - name: mycustomlibs
-      mountPath: /opt/configuration_resources/custom_lib
-  extraVolumes: # this will create the volume from the directory
-    - name: mycustomlibs
-      hostPath:
-        path: "CUSTOM_LIB_FOLDER"
-  properties:
-    customLibPath: "/opt/configuration_resources/custom_lib"
-Configure prometheus monitoring
-You first need monitoring to be enabled which can be accomplished by enabling the appropriate metrics flag (metrics.prometheus.enabled to true). To enable the creation of prometheus metrics within Nifi we need to create a Reporting Task. Login to the Nifi UI and go to the Hamburger menu on the top right corner, click Controller Settings --> Reporting Tasks After that use the + icon to add a task. Click on the Reporting in the wordcloud on the left and select PrometheusReportingTask --> change Send JVM metrics to true and click on the play button to enable this task.
+**Caution**: Never expose your AWS access key ID or secret access key in version control or in a public setting.
 
- 
+![image-20240216-063130.png](./Images/image-20240216-063130.png)
 
-Extra Information: https://backstage.rockcontent.com/nifi-cluster/
 
-                                 Deploy Apache NiFi as Statefullset 
+For optional components like Grafana, Prometheus, Vault, and KeyCloak, use similar commands if you decide to implement these features.
 
-                                 Apache NiFi Walkthroughs 
+**Extra Information:** [https://helm.sh/docs/helm/helm\_install/](https://helm.sh/docs/helm/helm_install/)
 
-Openfaas configuration 
-Configuration of the controller
-faas-netes can be configured with environment variables, but for a full set of options see the helm chart.
+### Uninstalling Charts
 
-Option
+If you need to remove the Tazama deployment:
 
-Usage
+```
+helm uninstall Tazama
+```
 
-httpProbe
+# Step 2 : Configuration
 
-Boolean - use http probe type for function readiness and liveness. Default: false
+For a system utilizing a variety of Helm charts, optimizing performance, storage, and configuration can significantly impact its efficiency and scalability. Below are details on how to configure and optimize each component for your FRMS system:
 
-write_timeout
+## 1. NATS
 
-HTTP timeout for writing a response body from your function (in seconds). Default: 60s
+- **Configuration**: Adjust NATS cluster size, memory, and CPU limits according to your workload.
+- **Storage**: For persistent storage, configure the `nats-streaming` stateful set with appropriate volume sizes.
+- **Performance**: Tune the `max_connections`, `max_payload`, and `write_deadline` settings for better performance.
+- **Documentation**: [NATS Documentation](https://docs.nats.io/)
 
-read_timeout
+## 2. ElasticSearch
 
-HTTP timeout for reading the payload from the client caller (in seconds). Default: 60s
+- **Configuration**: Increase the number of nodes for redundancy and scalability. Adjust JVM settings for better performance.
+- **Storage**: Utilize persistent volumes with dynamic provisioning for data storage. Consider SSDs for faster I/O.
+- **Performance**: Optimize index settings, such as `number_of_shards` and `number_of_replicas`, based on your use case.
+- **Documentation**: [Elasticsearch Documentation](https://www.elastic.co/guide/en/cloud-on-k8s/current/k8s-elasticsearch-specification.html)
 
-image_pull_policy
+## 3. ArangoDB (Single Deployment)
 
-Image pull policy for deployed functions (Always, IfNotPresent, Never). Default: Always
+- **Configuration**: Choose the right deployment mode (Single, Active Failover, or Cluster) based on your needs.
+- **Storage**: Ensure that persistent volume claims (PVCs) are adequately sized for your database growth.
+- **Performance**: Configure resource limits and requests to ensure that ArangoDB has enough CPU and memory.
+- **Documentation**: [ArangoDB Documentation](https://docs.arangodb.com/3.11/deploy/single-instance/)
 
-gateway.resources
+## 4. ArangoDB Ingress Proxy
 
-CPU/Memory resources requests/limits (memory: 120Mi, cpu: 50m)
+- **Configuration**: Set up the ingress rules to properly route traffic to the ArangoDB service.
+- **Security**: Implement TLS termination at the ingress level for secure database connections.
+- **Documentation**: The documentation would typically be part of the ArangoDB Kubernetes Operator guide or the specific ingress controller documentation used in your setup.
 
-faasnetes.resources
+## 5. Jenkins
 
-CPU/Memory resources requests/limits (memory: 120Mi, cpu: 50m)
+- **Configuration**: Utilize configuration as code (JCasC) for easier management and scalability of Jenkins settings.
+- **Storage**: Configure persistent storage for Jenkins home to ensure data is retained across restarts.
+- **Performance**: Adjust executors and resource limits based on your CI/CD pipeline requirements.
+- **Documentation**: [Jenkins Documentation](https://www.jenkins.io/doc/book/)
 
-operator.resources
+## 6. Redis-Cluster
 
-CPU/Memory resources requests/limits (memory: 120Mi, cpu: 50m)
+- **Configuration**: Set up Redis in cluster mode if high availability and scalability are required.
+- **Storage**: Use persistent storage for data durability. Configure memory limits appropriately.
+- **Performance**: Tune `maxmemory` policies and replication settings for optimal performance.
+- **Documentation**: [Redis Documentation](https://redis.io/docs/)
 
-queueWorker.resources
+## 7. Nginx Ingress Controller
 
-CPU/Memory resources requests/limits (memory: 120Mi, cpu: 50m)
+- **Configuration**: Adjust rate limiting, body size limits, and SSL/TLS configurations to meet your security and usability requirements.
+- **Performance**: Enable HTTP/2, configure SSL ciphers, and tuning worker processes for better performance.
+- **Documentation**: [NGINX Ingress Controller Documentation](https://docs.nginx.com/nginx-ingress-controller/)
 
-prometheus.resources
+## 8. APM, Logstash, Kibana (Elasticsearch)
 
-CPU/Memory resources requests/limits (memory: 512Mi)
+- **Configuration**: Link these components together for a cohesive monitoring and logging solution. Configure Kibana dashboards for easy visualization.
+- **Storage**: Ensure Elasticsearch has enough storage for logs and APM data. Consider using faster storage classes for better performance.
+- **Performance**: For Logstash, adjust pipeline workers and batch sizes. For APM, tune the sampling rate based on your needs.
+- **Documentation**: [Kibana Documentation](https://www.elastic.co/guide/en/cloud-on-k8s/current/k8s-kibana.html) [Logstash Documentation](https://www.elastic.co/guide/en/cloud-on-k8s/current/k8s-logstash.html) [APM Documentation](https://www.elastic.co/guide/en/cloud-on-k8s/current/k8s-apm-server.html)
 
-alertmanager.resources
+## 9. Grafana
 
-CPU/Memory resources requests/limits (memory: 25Mi)
+- **Configuration**: Use Grafana dashboards to visualize metrics from Prometheus and other data sources.
+- **Security**: Implement OAuth or LDAP for authentication. Use HTTPS for secure connections.
+- **Documentation**: [Grafana Documentation](https://grafana.com/docs/grafana/latest/) [Environment Monitoring](https://frmscoe.atlassian.net/wiki/spaces/FRMS/pages/65241090/Environment+Monitoring)
 
-nats.resources
+## 10. Prometheus
 
-CPU/Memory resources requests/limits (memory: 120Mi)
+- **Configuration**: Adjust scrape intervals and retention policies to balance between performance and data granularity.
+- **Storage**: Use persistent volumes for long-term metric storage. Consider high-performance storage for large datasets.
+- **Documentation**: [Prometheus Documentation](https://prometheus.io/docs/introduction/overview/)
 
-faasIdler.resources
+## 11. Vault
 
-CPU/Memory resources requests/limits (memory: 64Mi)
+- **Configuration**: Set up Vault in HA mode with a proper storage backend like Consul for resilience.
+- **Security**: Use auto-unseal feature to automate the unsealing process securely.
+- **Documentation**: [Vault Documentation](https://developer.hashicorp.com/vault/docs)
 
-basicAuthPlugin.resources
+## 12. KeyCloak
 
-CPU/Memory resources requests/limits (memory: 50Mi, cpu: 20m)
+- **Configuration**: Set up realms, clients, and roles according to your authentication and authorization needs.
+- **Performance**: Adjust caching settings and session limits to optimize for your workload.
+- **Documentation**: [Keycloak Documentation](https://www.keycloak.org/documentation)
 
-Readiness checking
-The readiness checking for functions assumes you are using our function watchdog which writes a .lock file in the default "tempdir" within a container. To see this in action you can delete the .lock file in a running Pod with kubectl exec and the function will be re-scheduled.
+Each of these components plays a critical role in the Tazama system. By carefully configuring and optimizing them according to the guidelines provided, you can ensure that your system is secure, scalable, and performs optimally. Always refer to the official documentation for the most up-to-date information and advanced configuration options.
 
-Namespaces
-By default all OpenFaaS functions and services are deployed to the openfaas and openfaas-fn namespaces. To alter the namespace use the helm chart.
+# Step 3: Post-Installation Configuration
 
-Ingress
-To configure ingress see the helm chart. By default NodePorts are used. These are listed in the deployment guide.
+## Elasticsearch Kube Secret for LumberJack
 
-By default functions are exposed at http://gateway:8080/function/NAME.
+In order to get the processor pods to write logs to the lumberjack deployment which then writes the log information to elasticsearch. 
 
-You can also use the IngressOperator to set up custom domains and HTTP paths
+[Logging Data View](https://github.com/frmscoe/docs/blob/main/Technical/Logging/Logging-Data-View.md)
 
- 
+1. There is a secret that is created for elasticsearch after the HELM install. Duplicate the one created by elasticsearch.
+2. Change the namespace for `development` to `processor`
 
-Elastic configuration 
-Usage notes
-This repo includes a number of examples configurations which can be used as a reference. They are also used in the automated testing of this chart.
+**Example**
 
-Automated testing of this chart is currently only run against GKE (Google Kubernetes Engine).
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: elasticsearch-master-certs
+  namespace: processor
+type: kubernetes.io/tls
+data:
+  ca.crt: >-
+  tls.crt: >-
+  tls.key: >-
 
-The chart deploys a StatefulSet and by default will do an automated rolling update of your cluster. It does this by waiting for the cluster health to become green after each instance is updated. If you prefer to update manually you can set OnDelete updateStrategy.
+```
 
-It is important to verify that the JVM heap size in esJavaOpts and to set the CPU/Memory resources to something suitable for your cluster.
+## Setting up TLS for Ingress
 
-To simplify chart and maintenance each set of node groups is deployed as a separate Helm release. Take a look at the multi example to get an idea for how this works. Without doing this it isn't possible to resize persistent volumes in a StatefulSet. By setting it up this way it makes it possible to add more nodes with a new storage size then drain the old ones. It also solves the problem of allowing the user to determine which node groups to update first when doing upgrades or changes.
+Secure your ingress with TLS by creating a tlscomsecret in each required namespace:
 
-We have designed this chart to be very un-opinionated about how to configure Elasticsearch. It exposes ways to set environment variables and mount secrets inside of the container. Doing this makes it much easier for this chart to support multiple versions with minimal changes.
+You can generate a self-signed certificate and private key with this command;
 
- 
+`openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout tls.key -out tls.crt -subj "/CN=${HOST}/O=${HOST}" -addext "subjectAltName = DNS:${HOST}"`
 
-How to deploy this chart on a specific K8S distribution?
-This chart is designed to run on production scale Kubernetes clusters with multiple nodes, lots of memory and persistent storage. For that reason it can be a bit tricky to run them against local Kubernetes environments such as Minikube.
+1. Create a secret with your TLS certificate and key;
 
-This chart is highly tested with GKE, but some K8S distribution also requires specific configurations.
+```nano
+apiVersion: v1
+kind: Secret
+metadata:
+  name: tlscomsecret
+  namespace: development
+type: kubernetes.io/tls
+data:
+  tls.crt: <base64-encoded-cert>
+  tls.key: <base64-encoded-key>
+```
 
-We provide examples of configuration for the following K8S providers:
+Or
 
-Docker for Mac
+You can use kubectl to create the secret by running the command below;
 
-KIND
+`kubectl create secret tlscomsecret ${CERT_NAME} --key tls.key --cert tls.crt -n development`
 
-Minikube
+2. Apply this configuration for each relevant namespace (`development`, `processor`, `cicd`, `default`).
 
-MicroK8S
+## Configuring Ingress Domain Names
 
-OpenShift
+Customize your ingress resources to match your domain names and assign them to the nginx-ingress-controller's IP address:
 
-How to deploy dedicated nodes types?
-All the Elasticsearch pods deployed share the same configuration. If you need to deploy dedicated nodes types (for example dedicated master and data nodes), you can deploy multiple releases of this chart with different configurations while they share the same clusterName value.
+Using `example.test.com` as an example
 
-For each Helm release, the nodes types can then be defined using roles value.
+**Please see the example below:**
 
-An example of Elasticsearch cluster using 2 different Helm releases for master, data and coordinating nodes can be found in examples/multi.
-
-Coordinating nodes
-Every node is implicitly a coordinating node. This means that a node that has an explicit empty list of roles will only act as a coordinating node.
-
-When deploying coordinating-only node with Elasticsearch chart, it is required to define the empty list of roles in both roles value and node.roles settings:
-
-
-roles: []
-
-esConfig:
-  elasticsearch.yml: |
-    node.roles: []
-More details in #1186 (comment)
-
-Clustering and Node Discovery
-This chart facilitates Elasticsearch node discovery and services by creating two Service definitions in Kubernetes, one with the name $clusterName-$nodeGroup and another named $clusterName-$nodeGroup-headless. Only Ready pods are a part of the $clusterName-$nodeGroup service, while all pods ( Ready or not) are a part of $clusterName-$nodeGroup-headless.
-
-If your group of master nodes has the default nodeGroup: master then you can just add new groups of nodes with a different nodeGroup and they will automatically discover the correct master. If your master nodes have a different nodeGroup name then you will need to set masterService to $clusterName-$masterNodeGroup.
-
-The chart value for masterService is used to populate discovery.zen.ping.unicast.hosts , which Elasticsearch nodes will use to contact master nodes and form a cluster. Therefore, to add a group of nodes to an existing cluster, setting masterService to the desired Service name of the related cluster is sufficient.
-
-How to deploy clusters with security (authentication and TLS) enabled?
-This Helm chart can generate a [Kubernetes Secret][] or use an existing one to setup Elastic credentials.
-
-This Helm chart can use existing [Kubernetes Secret][] to setup Elastic certificates for example. These secrets should be created outside of this chart and accessed using environment variables and volumes.
-
-This chart is setting TLS and creating a certificate by default, but you can also provide your own certs as a K8S secret. An example of configuration for providing existing certificates can be found in examples/security.
-
- 
-
-How to install plugins?
-The recommended way to install plugins into our Docker images is to create a custom Docker image.
-
-The Dockerfile would look something like:
-
-
-ARG elasticsearch_version
-FROM docker.elastic.co/elasticsearch/elasticsearch:${elasticsearch_version}
-
-RUN bin/elasticsearch-plugin install --batch repository-gcs
-
-And then updating the image in values to point to your custom image.
-
-There are a couple reasons we recommend this.
-
-Tying the availability of Elasticsearch to the download service to install plugins is not a great idea or something that we recommend. Especially in Kubernetes where it is normal and expected for a container to be moved to another host at random times.
-
-Mutating the state of a running Docker image (by installing plugins) goes against best practices of containers and immutable infrastructure.
-
-How to use the keystore?
-Basic example
-
-Create the secret, the key name needs to be the keystore key path. In this example we will create a secret from a file and from a literal string.
-
-
-kubectl create secret generic encryption-key --from-file=xpack.watcher.encryption_key=./watcher_encryption_key
-kubectl create secret generic slack-hook --from-literal=xpack.notification.slack.account.monitoring.secure_url='https://hooks.slack.com/services/asdasdasd/asdasdas/asdasd'
-
-To add these secrets to the keystore:
-
-
-keystore:
-  - secretName: encryption-key
-  - secretName: slack-hook
-
-Multiple keys
-All keys in the secret will be added to the keystore. To create the previous example in one secret you could also do:
-
-
-kubectl create secret generic keystore-secrets --from-file=xpack.watcher.encryption_key=./watcher_encryption_key --from-literal=xpack.notification.slack.account.monitoring.secure_url='https://hooks.slack.com/services/asdasdasd/asdasdas/asdasd'
-
-keystore:
-  - secretName: keystore-secrets
-
-Custom paths and keys
-If you are using these secrets for other applications (besides the Elasticsearch keystore) then it is also possible to specify the keystore path and which keys you want to add. Everything specified under each keystore item will be passed through to the volumeMounts section for mounting the secret. In this example we will only add the slack_hook key from a secret that also has other keys. Our secret looks like this:
-
-
-kubectl create secret generic slack-secrets --from-literal=slack_channel='#general' --from-literal=slack_hook='https://hooks.slack.com/services/asdasdasd/asdasdas/asdasd'
-
-We only want to add the slack_hook key to the keystore at path xpack.notification.slack.account.monitoring.secure_url:
-
-
-keystore:
-  - secretName: slack-secrets
-    items:
-    - key: slack_hook
-      path: xpack.notification.slack.account.monitoring.secure_url
-
-You can also take a look at the config example which is used as part of the automated testing pipeline.
-
-How to enable snapshotting?
-
-Install your snapshot plugin into a custom Docker image following the how to install plugins guide.
-
-Add any required secrets or credentials into an Elasticsearch keystore following the how to use the keystore guide.
-
-Configure the snapshot repository as you normally would.
-
-To automate snapshots you can use Snapshot Lifecycle Management or a tool like curator.
-
-How to configure templates post-deployment?
-You can use postStart lifecycle hooks to run code triggered after a container is created.
-
-Here is an example of postStart hook to configure templates:
-
-
-lifecycle:
-  postStart:
-    exec:
-      command:
-        - bash
-        - -c
-        - |
-          #!/bin/bash
-          # Add a template to adjust number of shards/replicas
-          TEMPLATE_NAME=my_template
-          INDEX_PATTERN="logstash-*"
-          SHARD_COUNT=8
-          REPLICA_COUNT=1
-          ES_URL=http://localhost:9200
-          while [[ "$(curl -s -o /dev/null -w '%{http_code}\n' $ES_URL)" != "200" ]]; do sleep 1; done
-          curl -XPUT "$ES_URL/_template/$TEMPLATE_NAME" -H 'Content-Type: application/json' -d'{"index_patterns":['\""$INDEX_PATTERN"\"'],"settings":{"number_of_shards":'$SHARD_COUNT',"number_of_replicas":'$REPLICA_COUNT'}}'
- 
-
-Extra Information:  How To Set Up an Elasticsearch, Fluentd and Kibana (EFK) Logging Stack on Kubernetes  | DigitalOcean
-
-Jenkins configuration 
-There is no additional configuration setup needed for Jenkins but for reference please see readme below
-
-
-Jenkins README.md
-03 Aug 2022, 01:48 PM
-Redis configuration 
-Redis™ common configuration parameters
-Name
-
-Description
-
-Value
-
-architecture
-
-Redis™ architecture. Allowed values: standalone or replication
-
-replication
-
-auth.enabled
-
-Enable password authentication
-
-true
-
-auth.sentinel
-
-Enable password authentication on sentinels too
-
-true
-
-auth.password
-
-Redis™ password
-
-""
-
-auth.existingSecret
-
-The name of an existing secret with Redis™ credentials
-
-""
-
-auth.existingSecretPasswordKey
-
-Password key to be retrieved from existing secret
-
-""
-
-auth.usePasswordFiles
-
-Mount credentials as files instead of using an environment variable
-
-false
-
-commonConfiguration
-
-Common configuration to be added into the ConfigMap
-
-""
-
-existingConfigmap
-
-The name of an existing ConfigMap with your custom configuration for Redis™ nodes
-
-""
-
- 
-
-Bootstrapping with an External Cluster
-This chart is equipped with the ability to bring online a set of Pods that connect to an existing Redis deployment that lies outside of Kubernetes. This effectively creates a hybrid Redis Deployment where both Pods in Kubernetes and Instances such as Virtual Machines can partake in a single Redis Deployment. This is helpful in situations where one may be migrating Redis from Virtual Machines into Kubernetes, for example. To take advantage of this, use the following as an example configuration:
-
-
-replica:
-  externalMaster:
-    enabled: true
-    host: external-redis-0.internal
-sentinel:
-  externalMaster:
-    enabled: true
-    host: external-redis-0.internal
-⚠️ This is currently limited to clusters in which Sentinel and Redis run on the same node! ⚠️
-
-Please also note that the external sentinel must be listening on port 26379, and this is currently not configurable.
-
-Once the Kubernetes Redis Deployment is online and confirmed to be working with the existing cluster, the configuration can then be removed and the cluster will remain connected.
-
-External DNS
-
-This chart is equipped to allow leveraging the ExternalDNS project. Doing so will enable ExternalDNS to publish the FQDN for each instance, in the format of <pod-name>.<release-name>.<dns-suffix>. Example, when using the following configuration:
-
-
-useExternalDNS:
-  enabled: true
-  suffix: prod.example.org
-  additionalAnnotations:
-    ttl: 10
-On a cluster where the name of the Helm release is a, the hostname of a Pod is generated as: a-redis-node-0.a-redis.prod.example.org. The IP of that FQDN will match that of the associated Pod. This modifies the following parameters of the Redis/Sentinel configuration using this new FQDN:
-
-replica-announce-ip
-
-known-sentinel
-
-known-replica
-
-announce-ip
-
-⚠️ This requires a working installation of external-dns to be fully functional. ⚠️
-
-See the official ExternalDNS documentation for additional configuration options.
-
-Cluster topologies
-Default: Master-Replicas
-
-When installing the chart with architecture=replication, it will deploy a Redis™ master StatefulSet (only one master node allowed) and a Redis™ replicas StatefulSet. The replicas will be read-replicas of the master. Two services will be exposed:
-
-Redis™ Master service: Points to the master, where read-write operations can be performed
-
-Redis™ Replicas service: Points to the replicas, where only read operations are allowed.
-
-In case the master crashes, the replicas will wait until the master node is respawned again by the Kubernetes Controller Manager.
-
-Standalone
-
-When installing the chart with architecture=standalone, it will deploy a standalone Redis™ StatefulSet (only one node allowed). A single service will be exposed:
-
-Redis™ Master service: Points to the master, where read-write operations can be performed
-
-Master-Replicas with Sentinel
-When installing the chart with architecture=replication and sentinel.enabled=true, it will deploy a Redis™ master StatefulSet (only one master allowed) and a Redis™ replicas StatefulSet. In this case, the pods will contain an extra container with Redis™ Sentinel. This container will form a cluster of Redis™ Sentinel nodes, which will promote a new master in case the actual one fails. In addition to this, only one service is exposed:
-
-Redis™ service: Exposes port 6379 for Redis™ read-only operations and port 26379 for accessing Redis™ Sentinel.
-
-For read-only operations, access the service using port 6379. For write operations, it's necessary to access the Redis™ Sentinel cluster and query the current master using the command below (using redis-cli or similar):
-
-
-SENTINEL get-master-addr-by-name <name of your MasterSet. e.g: mymaster>
-
-This command will return the address of the current master, which can be accessed from inside the cluster.
-
-In case the current master crashes, the Sentinel containers will elect a new master node.
-
-Using a password file
-To use a password file for Redis™ you need to create a secret containing the password and then deploy the chart using that secret.
-
-Refer to the chart documentation for more information on using a password file for Redis™.
-
- 
-
-
-Redis README.md
-03 Aug 2022, 01:48 PM
- 
-
-KeyCloak configuration 
-Usage of the tpl Function
-The tpl function allows us to pass string values from values.yaml through the templating engine. It is used for the following values:
-
-extraInitContainers
-
-extraContainers
-
-extraEnv
-
-extraEnvFrom
-
-affinity
-
-extraVolumeMounts
-
-extraVolumes
-
-livenessProbe
-
-readinessProbe
-
-startupProbe
-
-topologySpreadConstraints
-
-Additionally, custom labels and annotations can be set on various resources the values of which being passed through tpl as well.
-
-It is important that these values be configured as strings. Otherwise, installation will fail. See example for Google Cloud Proxy or default affinity configuration in values.yaml.
-
-JVM Settings
-Keycloak sets the following system properties by default: -Djava.net.preferIPv4Stack=true -Djboss.modules.system.pkgs=$JBOSS_MODULES_SYSTEM_PKGS -Djava.awt.headless=true
-
-You can override these by setting the JAVA_OPTS environment variable. Make sure you configure container support. This allows you to only configure memory using Kubernetes resources and the JVM will automatically adapt.
-
-
-extraEnv: |
-  - name: JAVA_OPTS
-    value: >-
-      -XX:+UseContainerSupport
-      -XX:MaxRAMPercentage=50.0
-      -Djava.net.preferIPv4Stack=true
-      -Djboss.modules.system.pkgs=$JBOSS_MODULES_SYSTEM_PKGS
-      -Djava.awt.headless=true
-Database Setup
-By default, Bitnami's PostgreSQL chart is deployed and used as database. Please refer to this chart for additional PostgreSQL configuration options.
-
-Using an External Database
-The Keycloak Docker image supports various database types. Configuration happens in a generic manner.
-
-Using a Secret Managed by the Chart
-The following examples uses a PostgreSQL database with a secret that is managed by the Helm chart.
-
-
-postgresql:
-  # Disable PostgreSQL dependency
-  enabled: false
-
-extraEnv: |
-  - name: DB_VENDOR
-    value: postgres
-  - name: DB_ADDR
-    value: mypostgres
-  - name: DB_PORT
-    value: "5432"
-  - name: DB_DATABASE
-    value: mydb
-
-extraEnvFrom: |
-  - secretRef:
-      name: '{{ include "keycloak.fullname" . }}-db'
-
-secrets:
-  db:
-    stringData:
-      DB_USER: '{{ .Values.dbUser }}'
-      DB_PASSWORD: '{{ .Values.dbPassword }}'
-dbUser and dbPassword are custom values you'd then specify on the commandline using --set-string.
-
-Using an Existing Secret
-The following examples uses a PostgreSQL database with a secret. Username and password are mounted as files.
-
-
-postgresql:
-  # Disable PostgreSQL dependency
-  enabled: false
-
-extraEnv: |
-  - name: DB_VENDOR
-    value: postgres
-  - name: DB_ADDR
-    value: mypostgres
-  - name: DB_PORT
-    value: "5432"
-  - name: DB_DATABASE
-    value: mydb
-  - name: DB_USER_FILE
-    value: /secrets/db-creds/user
-  - name: DB_PASSWORD_FILE
-    value: /secrets/db-creds/password
-
-extraVolumeMounts: |
-  - name: db-creds
-    mountPath: /secrets/db-creds
-    readOnly: true
-
-extraVolumes: |
-  - name: db-creds
-    secret:
-      secretName: keycloak-db-creds
-Creating a Keycloak Admin User
-The Keycloak Docker image supports creating an initial admin user. It must be configured via environment variables:
-
-KEYCLOAK_USER or KEYCLOAK_USER_FILE
-
-KEYCLOAK_PASSWORD or KEYCLOAK_PASSWORD_FILE
-
-Please refer to the section on database configuration for how to configure a secret for this.
-
-High Availability and Clustering
-For high availability, Keycloak must be run with multiple replicas (replicas > 1). The chart has a helper template (keycloak.serviceDnsName) that creates the DNS name based on the headless service.
-
-DNS_PING Service Discovery
-
-JGroups discovery via DNS_PING can be configured as follows:
-
-
-extraEnv: |
-  - name: JGROUPS_DISCOVERY_PROTOCOL
-    value: dns.DNS_PING
-  - name: JGROUPS_DISCOVERY_PROPERTIES
-    value: 'dns_query={{ include "keycloak.serviceDnsName" . }}'
-  - name: CACHE_OWNERS_COUNT
-    value: "2"
-  - name: CACHE_OWNERS_AUTH_SESSIONS_COUNT
-    value: "2"
-KUBE_PING Service Discovery
-
-Recent versions of Keycloak include a new Kubernetes native KUBE_PING service discovery protocol. This requires a little more configuration than DNS_PING but can easily be achieved with the Helm chart.
-
-As with DNS_PING some environment variables must be configured as follows:
-
-
-extraEnv: |
-  - name: JGROUPS_DISCOVERY_PROTOCOL
-    value: kubernetes.KUBE_PING
-  - name: KUBERNETES_NAMESPACE
-    valueFrom:
-      fieldRef:
-        apiVersion: v1
-        fieldPath: metadata.namespace
-  - name: CACHE_OWNERS_COUNT
-    value: "2"
-  - name: CACHE_OWNERS_AUTH_SESSIONS_COUNT
-    value: "2"
-However, the Keycloak Pods must also get RBAC permissions to get and list Pods in the namespace which can be configured as follows:
-
-
-rbac:
-  create: true
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: cicd-ingress
+  namespace: cicd
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/backend-protocol: HTTP
+    nginx.ingress.kubernetes.io/cors-allow-headers: X-Forwarded-For
+    nginx.ingress.kubernetes.io/proxy-body-size: 50m
+    nginx.ingress.kubernetes.io/use-regex: 'true'
+...
+spec:
+  tls:
+  - hosts:
+    - example.test.com
+      secretName: tlscomsecret
   rules:
-    - apiGroups:
-        - ""
-      resources:
-        - pods
-      verbs:
-        - get
-        - list
-Autoscaling
-Due to the caches in Keycloak only replicating to a few nodes (two in the example configuration above) and the limited controls around autoscaling built into Kubernetes, it has historically been problematic to autoscale Keycloak. However, in Kubernetes 1.18 additional controls were introduced which make it possible to scale down in a more controlled manner.
+  - host: example.test.com
+      ...
 
-The example autoscaling configuration in the values file scales from three up to a maximum of ten Pods using CPU utilization as the metric. Scaling up is done as quickly as required but scaling down is done at a maximum rate of one Pod per five minutes.
-
-Autoscaling can be enabled as follows:
+```
 
 
-autoscaling:
-  enabled: true
-KUBE_PING service discovery seems to be the most reliable mechanism to use when enabling autoscaling, due to being faster than DNS_PING at detecting changes in the cluster.
+**Please see the TMS example below:**
 
- 
-
-
-Keycloak README.md
-03 Aug 2022, 01:48 PM
- 
-
-ArangoDB configuration 
-There is no additional configuration setup needed for ArangoDB but for reference please see readme below
-
-
-ArangoDB README.md
-03 Aug 2022, 01:48 PM
- 
-
-Step 3 : Running Jenkins jobs to install processors 
-In this step we will be running you through the deployments of the different processors which needs to be run into the FRMS cluster through Jenkins which include the following:
-
- Populate_arango - This is to populate the arangoDB with the correct configuration used within the system
-
-
-
-
-
- Update Jenkins variables -  To update the variables go to Dashboard>Manage Jenkins>Configure System>Global Properties . These are the variables that used in the deployment jobs for the rules and rule processors.
-
-Variables to be updated:
-
-APMToken
-ArangoDbPassword
-ArangoDbURL
-ArangoToken
-OpenfaasPassword
-OpenfaasURL
-RedisHost
-RedisPassword
-RuleVersion
-
-
-
-
-NOTE: Additional work will be done changing these variables to Vault secrets for the sensitive information.
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: test-ingress
+  namespace: processor
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/backend-protocol: HTTP
+    nginx.ingress.kubernetes.io/cors-allow-headers: X-Forwarded-For
+    nginx.ingress.kubernetes.io/proxy-body-size: 50m
+    nginx.ingress.kubernetes.io/use-regex: 'true'
+spec:
+  tls:
+    - hosts:
+        - example.test.com
+      secretName: tlscomsecret
+  rules:
+    - host: example.test.com
+      http:
+        paths:
+          - path: /execute
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: transaction-monitoring-service-rel-1-0-0
+                port:
+                  number: 3000
+          - path: /
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: transaction-monitoring-service-rel-1-0-0
+                port:
+                  number: 3000
+          - path: /natsPublish
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: nats-utilities-rel-1-0-0
+                port:
+                  number: 3000
 
 
-Nuxeo Case Management - If the opensource case management system is required please run the following jobs to build the docker image and deploy Nuxeo to your cluster.
+```
+
+## Vault Configuration
+
+After installing the Vault chart, you'll need to initialize and unseal Vault manually. The process involves generating unseal keys and a root token which you'll use to access and configure Vault further.
+
+**For now vault has been integrated into the system but the Jenkins variables haven't been add to vault to be pull through . This will be done sometime.**
+
+[https://developer.hashicorp.com/vault/docs/concepts/seal](https://developer.hashicorp.com/vault/docs/concepts/seal)
+
+![](./Images/Vault_Operator_Init.PNG)
+![](./Images/Sign_In_With_Token.PNG)
+
+## Logstash Configuration
+
+If is set `LogLevel`to info, error etc.. in your Jenkins environment variables then you will need configure this.
+
+For comprehensive instructions on how to configure logging to Elasticsearch, please refer to the accompanying document. It provides a step-by-step guide that covers all the necessary procedures to ensure your logging system is properly set up, capturing and forwarding logs to Elasticsearch. This includes configuring log shippers, setting up Elasticsearch indices, and establishing the necessary security and access controls. By following this documentation, you can enable efficient log management and monitoring for your services.
+
+[Logging Data View](https://github.com/frmscoe/docs/blob/main/Technical/Logging/Logging-Data-View.md)
+
+## APM Configuration
+
+If is set `APMActive` to **true (default:true)** in your Jenkins environment variables then you will need configure this
+
+Once configured, the APM tool will begin collecting data on application performance metrics, such as response times, error rates, and throughput, which are critical for identifying and resolving performance issues. The collected data is sent to the APM server, where it can be visualized and analyzed. For detailed steps on integrating and configuring APM with your Jenkins environment, please refer to the specific APM setup documentation provided in your APM tool's resources.
+
+[Setting Up Elastic APM](https://github.com/frmscoe/docs/blob/main/Technical/Logging/Setting-Up-Elastic-APM.md)
+
+## Jenkins Configuration
+
+### Accessing Jenkins UI
+
+The following sections of the guide require you to work within the Jenkins UI. You can either access the UI through a doamin if you configured an ingress or by port forwarding.
+
+Port forward Jenkins to be accessible on localhost:8080 by running:
+  `kubectl --namespace cicd port-forward svc/jenkins 8080:8080`
+
+Get your 'admin' user password by running:
+  `kubectl exec --namespace cicd -it svc/jenkins -c jenkins -- /bin/cat /run/secrets/additional/chart-admin-password && echo`
+
+### Adding Credentials in Jenkins
+
+Credentials are critical for Jenkins to interact with other services like source control management systems (like GitHub), container registries, and Kubernetes clusters securely. Jenkins provides a centralized credentials store where you can manage all these credentials. Here's a step-by-step guide based on the images you've provided:
+
+#### GitHub Credentials
+
+1. **Navigate to Manage Jenkins → Credentials → System → Global credentials (unrestricted).**
+2. Click on **Add Credentials.**
+3. Select Username with password from the drop-down menu.
+4. Enter your GitHub username.
+5. Enter your GitHub password. If two-factor authentication is enabled, you'll need to use a personal access token in place of your password.
+6. Set the ID to something memorable, like **Github**.
+7. Optionally, provide a description like **GitHub Credentials**.
+8. Click **Save**.
+
+#### Container Registry Credentials
+
+To retrieve your ECR creditials for the aws user you can follow this guide:
+
+[ECR documentation](https://docs.aws.amazon.com/AmazonECR/latest/userguide/registry_auth.html)
+
+Or run this command to retrieve your token:
+
+aws ecr get-login-password --region < --region of the ECR>
+
+The above comand will print out a token copy that token which is used as your password.
+
+**Example**
+
+Username: AWS
+Password: <TOKEN>
+
+1. Follow the first two steps as above to navigate to the Add Credentials page.
+2. Select **Username with password.**
+3. Input the username for your container registry.
+4. Enter the corresponding password or access token for the registry.
+5. Assign a unique ID, such as **ContainerRegistry**.
+6. Include a description that helps identify the registry, like **Login info for the container registry.**
+7. Click **Save.**
+
+#### GitHub Read Package Credentials
+
+1. Again, follow the initial steps to reach the Add Credentials page.
+2. Select **Secret text**.
+3. Enter the personal access token you've created on GitHub with the necessary scopes to read packages.
+4. Set the ID, for example, **githubReadPackage**.
+5. In the description, note the purpose, such as GitHub package read access.
+6. Click **Save**.
+
+#### Kubernetes Credentials
+
+To configure Jenkins to use Kubernetes secrets for authenticating with Kubernetes services or private registries, you can follow these steps, similar to setting up GitHub package read access:
+
+1. **Retrieve the Kubernetes Token**:
+
+- Access your Kubernetes environment and locate the secret intended for Jenkins authentication, in this case, `scjenkins-secret`.
+  - Extract the token value from the secret, which is usually base64-encoded. You have need to decode.
+
+1. **Add Secret in Jenkins**:
+
+- Navigate to the Jenkins dashboard and go to the credentials management section.
+  - Choose to add new credentials, selecting the "Secret text" type.
+  - Paste the token you retrieved from the `scjenkins-secret` in namespace=**processor** into the Secret field.
+
+3. **Configure the Credential ID**:
+
+- Set the ID of the new secret to `kubernetespro`. This ID will be used to reference these credentials within your Jenkins pipelines or job configurations.
+
+4. **Add a Description**:
+
+- Provide a description for the secret to document its use, such as "Token for authenticating Jenkins with Kubernetes services."
+
+5. **Save the Configuration**:
+
+- Click Save to store the new credentials in Jenkins.
+
+Following this process will allow Jenkins jobs to authenticate with Kubernetes using the token stored in the secret, enabling operations that require Kubernetes access or pulling images from private registries linked to your Kubernetes environment.
+
+![image-20240215-150928.png](./Images/image-20240215-150928.png)
+![image-20240215-151159.png](./Images/image-20240215-151159.png)
+
+### Adding Managed Files for NPM Configuration in Jenkins
+
+**Navigate to Manage Jenkins → Managed files**
+
+[https://docs.github.com/en/packages/learn-github-packages/about-permissions-for-github-packages#about-scopes-and-permissions-for-package-registries](https://docs.github.com/en/packages/learn-github-packages/about-permissions-for-github-packages#about-scopes-and-permissions-for-package-registries)
+
+[https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token)
+
+![image-20240212-124706.png](./Images/image-20240212-124706.png)
+
+The image shows a Jenkins configuration screen for adding a managed file, specifically an NPM config file (npmrc). Here's a breakdown of the steps and fields:
+
+1. **Managed Files:** This section is for adding configuration files that Jenkins will manage and use across different jobs.
+2. **ID:** A unique identifier for the managed file.
+3. **Name:** In this case, it's **npmrcRulesCredentials**. This name helps users identify the file's purpose when selecting it for use in a job.
+4. **Comment:** An optional field where you can provide additional information about the managed file, such as its intended use. Here, it is described as 'user config'.
+5. **Enforce NPM version 9 registry format:** A checkbox that, when checked, enforces the file to be compatible with the NPM version 9 registry format.
+6. **Add NPM Registry:**
+
+- **URL:** The registry URL field should be filled with the NPM registry's URL. The provided URL, [**https://npm.pkg.github.com**](https://npm.pkg.github.com), this config is for accessing packages stored in GitHub Package Registry.
+- **Credentials:** The dropdown is set to **github public read package**, indicating that the credentials stored in Jenkins should be used to authenticate with this registry.
+- **Use this registry for specific scoped packages:** This option indicates that the registry URL and credentials should only be used for packages with a specific scope. In this case, the scope is **frmscoe**.
+- **Registry scopes:** Here, you specify the scope for which this registry should be used. Scoped packages are prefixed with the scope in their package name, ie: **frmscoe**.
+
+7. **Content:** The text area labeled 'Content' is where you can input the actual content of the **.npmrc** file. This content typically includes configuration settings like the registry URL, authentication tokens, and various other npm options. **always-auth = false** will not be always required (usually for public registries).
+
+8. **Add:** After configuring all the fields, you would click "Add" to save this managed file configuration.
+
+Once you've added this managed file, Jenkins can use it in various jobs that require npm to access private packages or specific registries. The managed file will be placed in the working directory of the job when it runs, ensuring that npm commands use the provided configuration.
+
+### Jenkins Node.js Configuration
+
+**Navigate to Manage Jenkins → Tools**
+
+- **Name**: Provide a descriptive name for the Node.js installation (e.g., "NodeJS 20.11.0").
+- **Install automatically**: Check this option to have Jenkins handle the installation of Node.js automatically on the build agent if it is not already installed.
+- **Install from** [http://nodejs.org](http://nodejs.org) : Select this to install Node.js directly from the official Node.js website.
+- **Version**: Specify the version of Node.js you require for your projects (e.g., "NodeJS 20.11.0"). Ensure to input a valid version number.
+- **Force 32bit architecture**: Check this only if there is a need to install a 32-bit version of Node.js on a 64-bit machine, which is uncommon for most modern applications.
+- **Global npm packages to install**: List any npm packages that should be installed globally, **Add** newman
+- **Global npm packages refresh hours**: Define how often Jenkins should update the npm package cache. If set to "0", the cache is updated with every build, otherwise, it's updated at the specified interval in hours (e.g., "72" for every three days).
+
+![image-20240215-061559.png](./Images/image-20240215-061559.png)
+
+### Jenkins Docker Installation Configuration
+
+**Navigate to Manage Jenkins → Tools**
+
+- **Name**: Assign a name to the Docker installation to be used as a reference within Jenkins (e.g., "Docker Stable Release").
+- **Install automatically**: Enable this setting to have Jenkins take charge of Docker installation on the build agent if Docker isn't already installed.
+  - **Download from** [http://docker.com](http://docker.com) : Opt to have Jenkins download Docker directly from the official Docker website.
+  - **Docker version**: Specify which version of Docker Jenkins should install. If you want the most recent version, use "latest". Otherwise, provide a specific version number (e.g., "19.03.12").
+
+![image-20240213-103453.png](./Images/image-20240213-103453.png)
+
+### Building Jenkin Agent Locally
+
+**This needs to be completed before adding the Jenkins Cloud agent.**
+
+Please follow the following document to help you build and push the image to the container registry.
+
+[Building the Jenkins Agent Image](https://github.com/frmscoe/docs/blob/main/Technical/Release-Management/building-the-jenkins-image.md)
+
+### Setting up a Jenkins cloud agent that will interact with your Kubernetes cluster
+
+- **Navigate to Manage Jenkins → Clouds → Kubernetes**
+- **Add the Path to Your Kubernetes Instance**: Enter the URL of your Kubernetes API server in the Kubernetes URL field. This allows Jenkins to communicate with your Kubernetes cluster.
+- **Disable HTTPS Certificate Check**: If your Kubernetes cluster uses a self-signed certificate or you are in a development environment where certificate validation is not critical, you can disable the HTTPS certificate check. However, for production environments, it is recommended to use a valid SSL certificate and leave this option unchecked for security reasons.
+- **Add Kubernetes Namespace**: Enter `cicd` in the Kubernetes Namespace field. This is where your Jenkins agents will run within the Kubernetes cluster.
+- **Add Your Kubernetes Credentials**: Select the credentials you have created for Kubernetes access. These credentials will be used by Jenkins to authenticate with the Kubernetes cluster.
+- **Select WebSocket**: Enabling WebSocket is useful for maintaining a stable connection between Jenkins and the Kubernetes cluster, especially when Jenkins is behind a reverse proxy or firewall.
+- **Add Jenkins URL**: This should be the internal service URL for Jenkins within your Kubernetes cluster, like `http://jenkins.cicd.svc.cluster.local`
+- **Add Pod Label**: Labels are key-value pairs used for identifying resources within Kubernetes. Here, you should add a label with the key `jenkins` and the value `agent`. This label will be used to associate the built pods with the Jenkins service.
+
+![image-20240212-115316.png](./Images/image-20240212-115316.png)![image-20240212-111931.png](./Images/image-20240212-111931.png)
+
+**Add a Pod Template**: This step involves defining a new pod template, which Jenkins will use to spin up agents on your Kubernetes cluster.
+
+- **Name**: Name the pod template `jenkins-builder`. This name is used to reference the pod template within Jenkins pipelines or job configurations.
+- **Namespace**: Specify `cicd` as the namespace where the Jenkins agents will be deployed within the Kubernetes cluster.
+- **Labels**: Set `jenkins-agent` as the label. This is a key identifier that Jenkins jobs will use to select this pod template when running builds.
+
+![image-20240212-112102.png](./Images/image-20240212-112102.png)
+
+**Add a Container**: In this part of the configuration, you define the container that will run inside the pod created from the pod template.
+
+**NOTE** This needs to point to the docker image built in this step : [Building the Jenkins Agent Image](https://github.com/frmscoe/docs/blob/main/Technical/Release-Management/building-the-jenkins-image.md)
+
+- **Name**: The container name is set to `jnlp`. This is a conventional name for a Jenkins agent container that uses the JNLP (Java Network Launch Protocol) for the master-agent communication.
+- **Docker Image**: The Docker image to use is [example.io/jenkins-inbound-agent:1.0.0](http://example.io/jenkins-inbound-agent:1.0.0) . This image is pre-configured with all the necessary tools to run as a Jenkins agent.
+- **Always Pull Image**: This option ensures that Jenkins always pulls the latest version of the specified Docker image before starting a build. This is important to keep your build environment up-to-date with the latest changes to the image.
+- **Working Directory**: The working directory is set to `/home/jenkins/agent`. This is the directory inside the container where Jenkins will execute the build steps.
+- **Command to Run**: This field is left blank, which means the default command from the Docker image will be used to start the agent.
+
+![image-20240212-115159.png](./Images/image-20240212-115159.png)
+
+**Run in Privileged Mode**: This is an advanced container setting that allows processes within the container to execute with elevated privileges, similar to the root user on a Linux system.
+
+To select "Run in Privileged Mode" in Jenkins Kubernetes plugin:
+
+1. Within the container configuration, look for the "Advanced..." button or link (not visible in the screenshot) and click it to expand the advanced options.
+2. In the advanced settings, find the checkbox labeled "Run in privileged mode" and select it.
+
+![image-20240212-114225.png](./Images/image-20240212-114225.png)
+
+**Image Pull Secret**
+
+Needs to be set to - **frmpullsecret - see screenshot below**
+
+1. **Private Registry Authentication**: If the container images used by your Jenkins jobs are hosted in a private registry, Kubernetes needs to authenticate with that registry. The image pull secret stores the required credentials (like a username and password or token).
+2. **Adding Image Pull Secret to Pod Template**:
+
+- Navigate to the Kubernetes cloud configuration within the Jenkins system settings.
+- Under the specific pod template that you are configuring, find the `ImagePullSecrets` section.
+- Enter the name of the Kubernetes secret that contains your private registry credentials in the `Name` field. This secret should already exist within the same namespace as where your Jenkins builder pods are running.
+- If you have multiple registries or need to pull from multiple private sources, you can add additional image pull secrets by clicking on the “Add Image Pull Secret” dropdown and entering the names of these secrets.
+
+3. **YAML Merge Strategy**: The YAML merge strategy determines how Jenkins should handle the YAML definitions from inherited pod templates. If set to 'Override', it means that the current YAML will completely replace any inherited YAML, which could be important if you need to ensure that the image pull secrets are applied without being altered by any inherited configurations.
+
+By properly configuring image pull secrets in your Jenkins Kubernetes pod templates, you enable Jenkins to pull the necessary private images to run your builds within the Kubernetes cluster. Without these secrets, the image pull would fail, and your builds would not be able to run.
+
+![image-20240215-144955.png](./Images/image-20240215-144955.png)
+
+### Steps to Configure Jenkins Global Variables
+
+1. **Accessing Global Configuration**:
+
+- Go to the Jenkins dashboard and navigate to **Manage Jenkins** > **Configure System**.
+- Scroll down to the **Global properties** section.
+- Check the box next to **Environment variables** to enable the definition of global environment variables.
+
+2. **Updating Environment Variables**:
+
+- You will find a list of predefined variables, which you may need to update with new values relevant to the current deployment. These variables include configuration URLs, passwords, and tokens required by Jenkins jobs during the deployment process.
+
+**Passwords:** These passwords can be found in your Kubernetes Cluster Secrets, which are autogenerated when the HELM installations are carried out.
+
+**Multiple ArangoDB passwords and endpoints:** The reason we have different names and passwords for ArangoDB is to keep things organized and safe. Each name points to a different part of the database where different information is kept. Just like having different keys for different rooms. This is useful when you have more than one ArangoDB running at the same time and you want to keep them separate. This way, you can connect to just the part you need.
+
+If you have a single database instance you may be wondering why multiple password variants are needed. For example, if my `Configuration`, `Pseudonyms` and `TransactionHistory` databases are served from the same Arango instance, why must I include single quotes in their password input whereas that requirement was not needed in the `ArangoPassword` variable.
+
+The `ArangoPassword` variable is utilised as a CLI argument by `newman`, for setting up the environment. Where it is called, there is some shell substitution of the `ArangoPassword` variable but because the substitution involves a special character, `$`, that has to be surrounded by quotes. 
+`newman {omitted} "arangoPassword=${ArangoPassword}" --disable-unicode`
+
+The same reasoning applies to passwords are that explicitly stated to need a single quote around them as they are substituted as is in processors' environments. This means that if your password contains special characters, then you **must** use single quotes to let the decoder know to interpret them as raw strings, or it will be taken as an indication of substitution
+
+3. **Variables and Descriptions**:
+
+- `APMActive`: A flag to enable or disable Application Performance Monitoring.
+  - **Default:** True
+  - **value:** true / false
+- `ArangoPassword`: A secret password required for accessing the Database which is used for populating the Arango configuration.
+  - **eg:** rm]ukXyA@M
+- `ArangoConfigurationURL`: Endpoint for the ArangoDB configuration Database.
+  - **value:** [http://arango.development.svc.cluster.local:8529](http://arango.development.svc.cluster.local:8529)
+- `ArangoConfigurationPassword`: A secret password required for accessing the Database. **NB:** The single quotes need to be added with your password.
+  - **eg:** 'rm]ukXyA@M'
+- `ArangoDbURL`: Endpoint for the ArangoDB configuration Database.
+  - **value:** [http://arango.development.svc.cluster.local:8529](http://arango.development.svc.cluster.local:8529)
+- `ArangoDbPassword`: A secret password required for accessing the Database. **NB:** The single quotes need to be added with your password.
+  - **eg:** 'rm]ukXyA@M'
+- `ArangoPseudonymsURL`: Endpoint for the ArangoDB pseudonym Database.
+  - **value:** [http://arango.development.svc.cluster.local:8529](http://arango.development.svc.cluster.local:8529)
+- `ArangoPseudonymsPassword`: A secret password required for accessing the Database. **NB:** The single quotes need to be added with your password.
+  - **eg:** 'rm\]ukXyA@M'
+- `ArangoTransactionHistoryURL`: Endpoint for the ArangoDB transaction history Database.
+  - **value:** [http://arango.development.svc.cluster.local:8529](http://arango.development.svc.cluster.local:8529)
+- `ArangoTransactionHistoryPassword`: A secret password required for accessing the Database. **NB:** The single quotes need to be added with your password.
+  - **eg:** 'rm\]ukXyA@M'
+- `ArangoEvaluationURL`: Endpoint for the ArangoDB Evalation Database.
+  - **value:** [http://arango.development.svc.cluster.local:8529](http://arango.development.svc.cluster.local:8529)
+- `ArangoEvaluationPassword`: A secret password required for accessing the Database. **NB:** The single quotes need to be added with your password.
+  - **eg:** 'rm\]ukXyA@M'
+- `Branch`: The specific branch in source control that the deployment should target.
+  - **value:** main
+- `CacheEnabled`: A flag to enable or disable caching.
+  - **value:** true / false
+- `CacheTTL`: Time-to-live for the cache in seconds.
+  - **eg:** 86400
+- `ELASTIC_HOST`: The hostname for the Elasticsearch service.
+  - **value:** [https://elasticsearch-master.development.svc:9200](https://elasticsearch-master.development.svc:9200)
+- `ELASTIC_USERNAME`: The username for accessing Elasticsearch.
+  - **value:** elastic
+- `ELASTIC_PASSWORD`: The password for accessing Elasticsearch.
+  - **eg:** ty6&dabnbh
+- `ELASTIC_SEARCH_VERSION`: The version of Elasticsearch in use.
+  - **value:** 8.5.1
+- `EnableQuoting`: A flag to enable or disable quoting functionality adding Pain messages in the chain.
+  - **value:** false
+- `envName`: The environment name for the deployment.
+  - **eg:** dev, prod , etc…
+- `FLUSHBYTES`: The byte threshold for flushing data.
+  - **value:** 10
+- `ImageRepository`: The repository for Docker images.
+  - **eg:** [example.io](http://example.io)
+- `LogLevel`: The verbosity level of logging. **NB:** The single quotes need to be added in.
+  - eg: 'info', 'error', 'silent', etc…
+- `MaxCPU`: The maximum CPU resource limit.
+  - **value:** leave blank
+- `NATS_SERVER_TYPE`: The type of NATS server in use.
+  - **value:** nats
+- `NATS_SERVER_URL`: The URL for the NATS server.
+  - **value:** nats.development.svc.cluster.local:4222
+- `RedisCluster`: A flag to indicate if Redis is running in cluster mode.
+  - **value:** true
+- `RedisPassword`: The password for accessing Redis.
+  - **eg:** ty6r5\*&p0
+- `RedisServers`: The hostname for the Redis Cluster service. **NB:** The single quotes need to be added in to the host string.
+  - **value:** '[{"host": "redis-cluster.development.svc.cluster.local", "port":6379}]'
+- `Repository`: This parameter specifies the name of a repository
+  - **value:** frmscoe
+
+### Adding Jenkins Jobs
+
+#### Download the Job Configurations:
+
+- Provided is a `jobs.zip` file, which contains job configuration files that you need to add to your Jenkins instance.
+- Extract the zip file.
+
+[jobs.zip](./Images/jobs.zip)
+
+#### Navigate to Configuration Directory:
+
+- Open a terminal on your local machine and change the directory to where you have stored the `jobs.zip` file and where you unpack it.
+
+```bash
+cd <path to configuration>
+```
+
+- `<path to configuration>` is a placeholder for the actual directory path where your `jobs.zip` unzipped files are located.
+
+**eg:** cd "C:\Documents\tasks\Jenkins\jobs"
+
+![image-20240220-055517.png](./Images/image-20240220-055517.png)
+
+#### Copy Jobs to Jenkins Pod:
+
+- Use the `kubectl cp` command to copy the job configurations from your local machine to the Jenkins pod running in your Kubernetes cluster.
+
+```bash
+kubectl cp . <name of pod>:/var/jenkins_home/jobs/ -n cicd
+```
+
+- `<name of pod>` is a placeholder for the actual name of your Jenkins pod. You need to replace it with the correct pod name which you can find by running `kubectl get pods -n cicd`.
+- The `-n cicd` specifies the namespace where your Jenkins is deployed, which in this case is `cicd`.
+
+#### Finalize the Setup:
+
+- After copying the job configurations, your Jenkins instance should recognize the new jobs. Jenkins will automatically load job configurations found in the `/var/jenkins_home/jobs/` directory.
+
+#### Reload Jenkins Configuration:
+
+- You might need to manually reload the Jenkins configuration or restart the Jenkins service for the new job configurations to take effect. This can be done from the Jenkins interface or by restarting the Jenkins pod:
+
+```bash
+kubectl rollout restart deployment <jenkins-deployment-name> -n cicd
+```
+
+- Make sure to replace `<jenkins-deployment-name>` with the actual deployment name of your Jenkins instance.
+- You can also safeRestart through the URL.
+
+**eg:** [http://localhost:52933/safeRestart](http://localhost:52933/safeRestart)
+
+![image-20240215-054140.png](./Images/image-20240215-054140.png)
+
+# Step 4 :Running Jenkins Jobs to Install Processors
+
+### Overview
+
+The process involves configuring Jenkins to deploy various processors into the Tazama cluster. These processors are essential components of the system and require specific configurations, such as database connections and service endpoints, to function correctly.
+
+### Populating ArangoDB:
+
+**Dashboard → Deployments→ ArangoDB**
+
+Run the `Create Arango Setup` and then `Populate Arango Configuration` jobs to populate the ArangoDB with the correct configuration required by the system. This job would utilize the variables set in the global configuration to connect to ArangoDB and perform the necessary setup.
+
+![image-20240215-052351.png](./Images/image-20240215-052351.png)
+
+### Edit Jobs: Configuring Credentials and Kubernetes Endpoints in Jenkins
+
+After importing the Jenkins jobs, you need to configure each job with the appropriate credentials and Kubernetes server endpoint details. This setup is crucial to ensure that each job has the necessary permissions and access to interact with other services and the Kubernetes cluster.
+
+#### Configuring Rule Processors:
+
+1. **Access Each Rule Processor Job:**
+
+- Navigate to the job configuration for each rule processor, such as TMS, Typology, etc.
+- Within each job, look for the section where you can define or edit the repository from which the job will fetch the code or artifacts.
+
+2. **Repository Configuration:**
+
+- Set the **Repository URL** to the Git repository where the code for the processor is located. This is typically a URL like https://github.com/<Repository>/event-director/.
+- Under Credentials, select the appropriate credentials from the drop-down list, such as **Github Creds**, which should correspond to the credentials that have access to the repository.
+
+3. **Kubernetes Configuration:**
+   
+**NOTE-** The Kubernetes server endpoint can be copied from your .kubeconfig file under cluster -> server
+
+- Check the option for **Setup Kubernetes CLI (kubectl**) if not already done.
+- Input the **Kubernetes server endpoint**; this is the API server URL of your Kubernetes cluster.
+- Select the **Credentials** for Kubernetes from the drop-down list, which will typically be a service account token or a kubeconfig file.
+
+4. **Binding Credentials:**
+
+- Under the **Bindings** section, define the environment variables that the job will use internally.
+- For username and password types, such as container registry credentials, set the appropriate **Username Variable** and **Password Variable**. Use **REG\_USER** and **REG\_PASS** for registry credentials.
+- Choose the specific credentials from the drop-down list, like **Login info for the Sybrin Azure container registry.**
+- For secret texts, such as a GitHub access token, set the Variable to an environment variable name, such as **READ\_GH\_TOKEN**, and select the appropriate credentials, like **github public read package**.
+
+By completing these steps, you ensure that each Jenkins job can access the necessary repositories and services with the correct permissions and interact with your Kubernetes cluster using the right endpoints and credentials. It's essential to review and verify these settings regularly, especially after any changes to the credentials or infrastructure.
+
+![image-20240213-064147.png](./Images/image-20240213-064147.png)
+![image-20240213-064707.png](./Images/image-20240213-064707.png)
+![image-20240213-064256.png](./Images/image-20240213-064256.png)
+
+### Deploying to the Cluster:
+
+**Dashboard → Deployments→ Pipelines→ Deploying All Rules and Rule Processors**
+
+Run the Jenkins jobs that deploy the processors to the Tazama cluster. These jobs will reference the global environment variables you've configured, ensuring that each processor has the required connections and configurations.
+
+Run the **Deploying All Rules and Rule Processors Pipeline Job**
+
+![image-20240212-161403.png](./Images/image-20240212-161403.png)
+
+### End-to-End Platform Testing with the "E2E Test" Jenkins Job
+
+**Dashboard → Testing→ E2E Test**
+
+#### Overview of the "E2E Test" Job
+
+The "E2E Test" job in Jenkins is an essential component for ensuring the integrity and robustness of the platform. It is specifically designed to perform comprehensive end-to-end testing, replicating user behaviors and interactions to verify that every facet of the platform functions together seamlessly.
+
+#### Purpose and Benefits
+
+- **Comprehensive Assessment:** The E2E Test tests all aspects of the platform, from individual services to data processing, ensuring that all integrated components are operating together.
+- **Confidence in Releases:** Successful E2E tests will display the stability and readiness of the platform for production releases.
+
+#### Running the Test and Post-Test Evaluation
+
+- **Test Execution:** Trigger the E2E Test job.
+- **Monitoring Results:** Jenkins provides an overview of the job's results, including the last successful run, failures, and test durations.
+- **Post-Test Actions:** Upon completion of the E2E Test, it's crucial to examine the **evaluationResults** database within ArangoDB.
+- Navigate to the **transactions** collection within the database.
+- Confirm the presence of a transaction record, which signifies a successful end-to-end test execution.
+
+![image-20240213-122427.png](./Images/image-20240213-122427.png)
+
+# Common Errors**
+
+![image-20240213-144301.png](./Images/image-20240213-144301.png)
+
+### Arango ingress error**
+
+To resolve this issue, you would need to:
+
+1. Ensure that the `tlscomsecret` secret contains the necessary TLS certificates and keys.
+2. Add the `tlscomsecret` to the `development` namespace, if it's not already present.
+3. After the secret is correctly placed in the namespace, restart the affected pod by deleting the existing pod. Kubernetes will automatically spin up a new pod which should now successfully mount the required volumes, including the TLS secrets, and run as expected.
+
+![image-20240215-142735.png](./Images/image-20240215-142735.png)![image-20240215-142727.png](./Images/image-20240215-142727.png)
+
+### Network Access Error in Container Deployment
+
+To address the network access error encountered when deploying containers that require communication with `arango.development.svc`, follow these steps:
+
+1. Verify that the network policies and service discovery configurations are correctly set up within your cluster to allow connectivity to `arango.development.svc`.
+
+2. If your deployment is within a Kubernetes environment and you're using network namespaces, consider enabling the Host Network option. This grants the pod access to the host machine's network stack, which can be necessary if the service is only resolvable or accessible in the host's network:
+
+- Navigate to the configuration settings of your pod or service deployment.
+- Locate the "Host Network" option, which allows the pod to use the network namespace of the host machine.
+- Enable the "Host Network" checkbox to allow direct access to the network services on the host, which can resolve DNS issues if `arango.development.svc` is only available on the host's network.
+
+Implementing these steps should help in resolving connectivity issues related to the `arango.development.svc` hostname not being found, facilitating successful POST requests to the specified endpoints.
+
+![image-20240215-143113.png](./Images/image-20240215-143113.png)
+
+### Addressing Pod Restart Issues in Kubernetes
+
+If you are experiencing problems with your Kubernetes pods that may be related to environmental variables or configuration issues, such as frequent restarts or failed connections to services like ArangoDB, follow these steps to troubleshoot and resolve the issue:
+
+1. Check the Environment Variables in Jenkins:
+
+- Ensure that all required environment variables are properly set in Jenkins. These variables might include database connection strings, service endpoints, credentials, or other configuration parameters necessary for your application to run correctly.
+- Review the build and deployment scripts in Jenkins to confirm that the environment variables are being injected into the deployment manifests or pod configurations.
+
+2. Verify ArangoDB Configuration:
+
+- Double-check the ArangoDB configuration to ensure that it is correct and aligns with the requirements of your application. This may include database URLs, user credentials, database names, and any other related configuration details.
+- If you are using Kubernetes ConfigMaps or Secrets to manage the ArangoDB configuration, make sure they are correctly defined and mounted into your pods.
+
+3. Monitor Pod Status and Logs:
+
+- Observe the status of the pods through the Kubernetes dashboard or using `kubectl get pods` command. Take note of any pods that are in a CrashLoopBackOff state or that are frequently restarting.
+- Use `kubectl describe pod <pod-name>` to get more details about the pod's state and events that might indicate what is causing the restarts.
+- Examine the logs of the restarting pods using `kubectl logs <pod-name>` to look for any error messages or stack traces that could point to a configuration problem or a missing environment variable.
+
+4. Address Possible Configuration Drifts:
+
+- In a dynamic environment like Kubernetes, configuration drifts can occur where the running state of the system deviates from the defined state. Ensure that all deployments, StatefulSets, or other controller resources match the intended configuration.
+
+5. Update and Restart Pods if Necessary:
+
+- Once any necessary changes have been made to the environment variables or ArangoDB configuration, update the relevant Kubernetes resources.
+- You can restart the affected pods to apply the changes by deleting them and letting the ReplicaSet create new ones with the correct configuration.
+
+By carefully checking your Jenkins environment variables and ensuring the ArangoDB configuration is correct, you can resolve issues leading to pod instability and ensure that your services run smoothly in the Kubernetes environment.
+
+![image-20240215-143411.png](./Images/image-20240215-143411.png)
+![image-20240215-143443.png](./Images/image-20240215-143443.png)
+![image-20240215-143505.png](./Images/image-20240215-143505.png)
+
+### Addressing Jenkins Build Authentication Errors
+
+When encountering authentication errors during a Jenkins build process that involve Kubernetes plugin issues or Docker image push failures, follow these troubleshooting steps:
+
+1. Kubernetes Plugin Error:
+
+- The error message suggests a `NullPointerException`, which is often due to missing or improperly configured credentials within Jenkins. This could be an issue with the Kubernetes plugin configuration where a required value is not being set, resulting in a null being passed where an object is expected.
+- Review your Jenkins job configurations and ensure that all the Kubernetes-related credentials are correctly set and that the plugin is properly configured.
+- If you are using credential substitution (injected variables), ensure that the substitutions are correctly configured. If necessary, as per the provided instruction, deselect all credential substitutions to see if this resolves the error. This can help isolate the issue by reverting to default or hardcoded credentials, which can then be individually reinstated to identify the problematic substitution.
+
+2. Docker Image Push Error:
+
+- The failure to push a Docker image to a registry, with an error indicating "unable to retrieve auth token," typically points to incorrect credentials being used for Docker registry authentication.
+- Confirm that the Docker registry credentials set in Jenkins are accurate. You may need to update the username and password or use an access token if the registry requires it.
+- Ensure that the credentials are correctly mapped in the Jenkins job and that any credential substitution is correctly applied.
+
+3. Rerun the Jenkins Jobs:
+
+- After making the necessary corrections, rerun the Jenkins jobs to confirm that the issue is resolved.
+- Monitor the build output for any further authentication-related errors and address them as needed.
+
+4. Additional Steps:
+
+- If the issue persists, consider regenerating or re-obtaining the necessary credentials and updating them in Jenkins.
+- Check the Jenkins system logs and the specific job's console output for more detailed error messages that can provide additional context for the failure.
+
+By following these steps, you can address the authentication issues that are causing the Jenkins build process to fail, ensuring a successful connection to Kubernetes and Docker registry services.
+
+### Jenkins Build Agent terminating and restarting
+
+If for some reason the jenkins agent starts up on your kubernetes instance and then termnates and restarts. You might need to change to frmpullsecret with namespace`cicd`to .dockerconfigjson data instead of the AWS data.
+
+[ECR documentation](https://docs.aws.amazon.com/AmazonECR/latest/userguide/registry_auth.html)
+
+Or run this command to retrieve your token:
+
+aws ecr get-login-password --region <--Region of the ECR>
+
+The above comand will print out a token copy that token which is used as your password.
+
+**Docker Config JSON: Understanding the** `auth` **Field**
+
+The `auth` field in the `.dockerconfigjson` file is a base64-encoded string that combines your Docker registry username and password in the format `username:password`. Here's how you can construct it:
+
+**Steps to Construct the** `auth` **Field**
+
+1. **Combine the Username and Password**
+
+   Format the string as `username:password`. For example, your username is `AWS` and your password is `yourpassword`.
+
+2. **Base64 Encode the String**
+
+You can use a command-line tool like `base64` or an online base64 encoder to encode the string.
+
+Using a command-line tool:
+
+```sh
+echo -n 'AWS:yourpassword' | base64
+```
+
+This will produce a base64-encoded string, which you then place in the auth field.
+
+Here is an example of what the .dockerconfigjson data in the secret file might look like after encoding:
+
+```json
+{"auths":{"registory":{"username":"AWS","password":"token","email":"no@email.local","auth":"QVdTOnlvdXJwYXNzd29yZA=="}}}
+
+```
+
+**Please see the example below:**
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: frmpullsecret
+  namespace: cicd
+type: kubernetes.io/dockerconfigjson
+data:
+  .dockerconfigjson: >-
+```
 
 
+# Conclusion: Finalizing Tazama System Installation
 
+With the Helm charts and Jenkins jobs successfully executed, your Tazama (Real-time Monitoring System) should now be operational within your Kubernetes cluster. This comprehensive setup leverages the robust capabilities of Kubernetes orchestrated by Jenkins automation to ensure a seamless deployment process.
 
+As you navigate through the use and potential customization of the Tazama system, keep in mind the importance of maintaining the configurations as documented in this guide. Regularly update your environment variables, manage your credentials securely, and ensure that the pipeline scripts are kept up-to-date with any changes in your infrastructure or workflows.
 
- Deploying All Rules and Rule Processors
+Should you encounter any issues or have questions regarding the installation and configuration of the Tazama system, support is readily available. You can reach out via email or join the dedicated Slack workspace for collaborative troubleshooting and community support.
 
+For direct assistance:
 
-Once all these processors have been run you will see them both in Openfaas and on your FRMS Cluster
+- Slack: [Tazama.slack.com](http://Tazama.slack.com)
 
-
-
- 
-
-Step 4 : Conclusion 
- 
-
-Now that the Helm chart and Jenkins deployments have been run , you will have a working cluster
+Joining the FRMS CoE workspace on Slack will connect you with a community of experts and peers who can offer insights and help you leverage the full potential of your FRMS system. Always ensure that you are working within secure communication channels and handling sensitive information with care.

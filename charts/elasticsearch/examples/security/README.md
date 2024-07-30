@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+
 # Security
 
 This example deploy a 3 nodes Elasticsearch 8.5.1 with authentication and

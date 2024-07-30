@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 apiVersion: v1
 appVersion: "1.4.2"
 description: This Chart seemlessly integrates Kubernetes with AWS ECR

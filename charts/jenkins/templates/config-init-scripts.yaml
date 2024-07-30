@@ -1,5 +1,7 @@
-{{- if .Values.controller.initScripts -}}
+# SPDX-License-Identifier: Apache-2.0
 
+{{- if .Values.controller.initScripts -}}
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:

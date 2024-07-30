@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 {{- $sts := list "sts" "StatefulSet" "statefulset" -}}
 {{- if (or (.Values.useStatefulSet) (and .Values.persistence.enabled (not .Values.persistence.existingClaim) (has .Values.persistence.type $sts)))}}
 apiVersion: apps/v1

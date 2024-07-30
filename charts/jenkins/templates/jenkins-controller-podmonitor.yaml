@@ -1,7 +1,9 @@
+# SPDX-License-Identifier: Apache-2.0
+
 {{- if .Values.controller.googlePodMonitor.enabled }}
+---
 apiVersion: monitoring.googleapis.com/v1
 kind: PodMonitoring
-
 metadata:
   name: {{ template "jenkins.fullname" . }}
 {{- if .Values.controller.googlePodMonitor.serviceMonitorNamespace }}

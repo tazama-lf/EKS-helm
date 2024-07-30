@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 {{- if and .Values.imageRenderer.enabled .Values.imageRenderer.autoscaling.enabled }}
 apiVersion: {{ include "grafana.hpa.apiVersion" . }}
 kind: HorizontalPodAutoscaler

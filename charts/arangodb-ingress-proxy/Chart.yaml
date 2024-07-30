@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 description: ArangoDB Ingress Proxy
 name: arangodb-ingress-proxy
 tillerVersion: '>2.7'

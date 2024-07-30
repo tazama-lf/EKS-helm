@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 ---
 # Permit co-located instances for solitary minikube virtual machines.
 antiAffinity: "soft"

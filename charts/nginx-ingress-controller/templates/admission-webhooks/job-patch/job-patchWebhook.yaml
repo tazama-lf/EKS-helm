@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 {{- if and .Values.controller.admissionWebhooks.enabled .Values.controller.admissionWebhooks.patch.enabled (not .Values.controller.admissionWebhooks.certManager.enabled) -}}
 apiVersion: batch/v1
 kind: Job

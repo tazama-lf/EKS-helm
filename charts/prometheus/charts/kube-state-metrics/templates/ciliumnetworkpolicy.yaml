@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 {{- if and .Values.networkPolicy.enabled (eq .Values.networkPolicy.flavor "cilium") }}
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 suite: Controller > KEDA
 templates:
   - controller-keda.yaml
