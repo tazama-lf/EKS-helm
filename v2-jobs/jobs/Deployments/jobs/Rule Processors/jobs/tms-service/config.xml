@@ -1,0 +1,92 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?><project>
+  <actions/>
+  <description/>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    
+  </properties>
+  <scm class="hudson.plugins.git.GitSCM" plugin="git@5.2.1">
+    <configVersion>2</configVersion>
+    <userRemoteConfigs>
+      <hudson.plugins.git.UserRemoteConfig>
+        <url>https://github.com/$Repository/tms-service/</url>
+        <credentialsId>Github</credentialsId>
+      </hudson.plugins.git.UserRemoteConfig>
+    </userRemoteConfigs>
+    <branches>
+      <hudson.plugins.git.BranchSpec>
+        <name>*/$Branch</name>
+      </hudson.plugins.git.BranchSpec>
+    </branches>
+    <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+    <submoduleCfg class="empty-list"/>
+    <extensions/>
+  </scm>
+  <assignedNode>jenkins-agent</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>#!/bin/bash -xe
+# Replace content in Dockerfile
+sed -i "s|ENV QUOTING=false|ENV QUOTING=${EnableQuoting}|g" Dockerfile
+sed -i "s|ENV CACHE_TTL=30|ENV CACHE_TTL=${CacheTTL}|g" Dockerfile
+sed -i "s|ENV MAX_CPU=|ENV MAX_CPU=${MaxCPU}|g" Dockerfile
+sed -i "s|ENV APM_SECRET_TOKEN=|ENV APM_SECRET_TOKEN=${APMToken}|g" Dockerfile
+sed -i 's|ENV PRODUCER_STREAM=|ENV PRODUCER_STREAM=event-director|g' Dockerfile
+sed -i "s|ENV LOGSTASH_LEVEL='info'|ENV LOGSTASH_LEVEL=${LogLevel}|g" Dockerfile
+sed -i "s|ENV APM_ACTIVE=true|ENV APM_ACTIVE=${APMActive}|g" Dockerfile
+sed -i "s|ENV SERVER_URL=0.0.0.0:4222|ENV SERVER_URL=${NATS_SERVER_URL}|g" Dockerfile
+sed -i "s|ENV STARTUP_TYPE=nats|ENV STARTUP_TYPE=${NATS_SERVER_TYPE}|g" Dockerfile
+sed -i "s|ENV REDIS_SERVERS=|ENV REDIS_SERVERS=${RedisServers} |g" Dockerfile
+sed -i "s|ENV REDIS_AUTH=|ENV REDIS_AUTH=${RedisPassword}|g" Dockerfile
+sed -i "s|ENV REDIS_IS_CLUSTER=|ENV REDIS_IS_CLUSTER=${RedisCluster}|g" Dockerfile
+sed -i "s|ENV PSEUDONYMS_DATABASE_URL=|ENV PSEUDONYMS_DATABASE_URL=${ArangoPseudonymsURL}|g" Dockerfile
+sed -i "s|ENV PSEUDONYMS_DATABASE_PASSWORD=|ENV PSEUDONYMS_DATABASE_PASSWORD=${ArangoPseudonymsPassword}|g" Dockerfile
+sed -i "s|ENV PSEUDONYMS_DATABASE_CERT_PATH=|ENV PSEUDONYMS_DATABASE_CERT_PATH='/usr/local/share/ca-certificates/ca-certificates.crt'|g" Dockerfile
+sed -i "s|ENV TRANSACTION_HISTORY_DATABASE_URL=|ENV TRANSACTION_HISTORY_DATABASE_URL=${ArangoTransactionHistoryURL}|g" Dockerfile
+sed -i "s|ENV TRANSACTION_HISTORY_DATABASE_PASSWORD=|ENV TRANSACTION_HISTORY_DATABASE_PASSWORD=${ArangoTransactionHistoryPassword}|g" Dockerfile
+sed -i "s|example.io|${ImageRepository}|g" deployment.yaml
+sed -i "s|${ImageRepository}/transaction-monitoring-service-rel-1-0-0|${ImageRepository}/transaction-monitoring-service-rel-1-0-0-${envName}|g" deployment.yaml
+sed -i "s/\${GH_TOKEN}/${READ_GH_TOKEN}/g" .npmrc
+ls -l
+# Login to container registry
+echo $REG_PASS | buildah login --username $REG_USER --password-stdin ${ImageRepository}
+# Build Docker Image
+buildah bud --format docker --ulimit nofile=4096:4096 -t ${ImageRepository}/transaction-monitoring-service-rel-1-0-0-${envName}:1.0.0 .
+# Push Docker Image to Container Registry
+buildah push ${ImageRepository}/transaction-monitoring-service-rel-1-0-0-${envName}:1.0.0
+# Apply newly built image to a kubernetes pod
+kubectl apply -f deployment.yaml
+# Rollout restart the deployment to take effect
+kubectl rollout restart deployment transaction-monitoring-service-rel-1-0-0 -n processor
+# Apply the service configuration
+kubectl apply -f service.yaml</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers/>
+  <buildWrappers>
+    <org.jenkinsci.plugins.credentialsbinding.impl.SecretBuildWrapper plugin="credentials-binding@657.v2b_19db_7d6e6d">
+      <bindings>
+        <org.jenkinsci.plugins.credentialsbinding.impl.UsernamePasswordMultiBinding>
+          <credentialsId>ContainerRegistry</credentialsId>
+          <usernameVariable>REG_USER</usernameVariable>
+          <passwordVariable>REG_PASS</passwordVariable>
+        </org.jenkinsci.plugins.credentialsbinding.impl.UsernamePasswordMultiBinding>
+        <org.jenkinsci.plugins.credentialsbinding.impl.StringBinding>
+          <credentialsId>githubReadPackage</credentialsId>
+          <variable>READ_GH_TOKEN</variable>
+        </org.jenkinsci.plugins.credentialsbinding.impl.StringBinding>
+      </bindings>
+    </org.jenkinsci.plugins.credentialsbinding.impl.SecretBuildWrapper>
+    <org.csanchez.jenkins.plugins.kubernetes.KubectlBuildWrapper plugin="kubernetes@4186.v1d804571d5d4">
+      <serverUrl>https://E2D6FC74387DB5078991F3AF86082D22.yl4.af-south-1.eks.amazonaws.com</serverUrl>
+      <credentialsId>kubernetespro</credentialsId>
+    </org.csanchez.jenkins.plugins.kubernetes.KubectlBuildWrapper>
+  </buildWrappers>
+</project>
