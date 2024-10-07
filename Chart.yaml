@@ -24,9 +24,9 @@ keywords:
   - vault
 home: https://github.com/frmscoe/EKS-helm
 maintainers:
-  - name: kyle
-    email: kyle.vorster@sybrin.com
-    url: https://github.com/vorsterk
+  - name: Tazama
+    email: engineering@tazama.com
+    url: https://github.com/tazama-lf
 dependencies:
   - name: apm
     version: 8.5.1
