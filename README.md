@@ -138,7 +138,7 @@ This guide will walk you through the setup of the Tazama (Real-time Antifraud an
 
 ## Prerequisites
 
-- A Kubernetes cluster up and running. We have terraform scripts in this reposiroty to help you set up an EKS cluster. Go to the `eks-terraform` folder and follow steps in the README.md for the detailed steps.
+- A Kubernetes cluster up and running. We have terraform scripts in this repository to help you set up an EKS cluster. Go to the `eks-terraform` folder and follow steps in the README.md for the detailed steps.
 - Helm installed on your local machine or wherever you plan to run the commands from.
 - Basic understanding of Kubernetes concepts like namespaces, pods, and ingress.
 
