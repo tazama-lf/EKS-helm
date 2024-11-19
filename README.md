@@ -25,7 +25,7 @@
   - [3. ArangoDB (Single Deployment)](#3-arangodb-single-deployment)
   - [4. ArangoDB Ingress Proxy](#4-arangodb-ingress-proxy)
   - [5. Jenkins](#5-jenkins)
-  - [6. Redis-Cluster](#6-redis-cluster)
+  - [6. Valkey-Cluster](#6-valkey-cluster)
   - [7. Nginx Ingress Controller](#7-nginx-ingress-controller)
   - [8. APM, Logstash, Kibana (Elasticsearch)](#8-apm-logstash-kibana-elasticsearch)
   - [9. Grafana](#9-grafana)
@@ -170,17 +170,16 @@ First, add the Tazama Helm repository to enable the installation of charts:
 3. ArangoDB (single deployment)
 4. ArangoDb Ingress Proxy
 5. Jenkins
-6. Redis-Cluster
-7. Nginx ingress
-8. APM (Elasticsearch)
-9. Logstash (Elasticsearch)
-10. Kibana (Elasticsearch)
-11. Infra-chart
-12. aws-ecr-credential
-13. Grafana - **Optional**
-14. Prometheus - **Optional**
-15. Vault - **Optional**
-16. KeyCloak - **Optional**
+6. Nginx ingress
+7. APM (Elasticsearch)
+8. Logstash (Elasticsearch)
+9. Kibana (Elasticsearch)
+10. Infra-chart
+11. aws-ecr-credential
+12. Grafana - **Optional**
+13. Prometheus - **Optional**
+14. Vault - **Optional**
+15. KeyCloak - **Optional**
 
 **Optional** - Please note that these are additional features; while not required, they can enhance the platform's capabilities. Implementing them is optional and will not hinder the basic operation or the end-to-end functionality of the platform.
 
@@ -188,7 +187,7 @@ First, add the Tazama Helm repository to enable the installation of charts:
 
 ### Repo
 
-[https://github.com/tazama-lf/EKS-helm](https://github.com/tazama=lf/EKS-helm)
+[https://github.com/tazama-lf/EKS-helm](https://github.com/tazama-lf/EKS-helm)
 
 ### Helm Repository Setup
 
@@ -242,11 +241,16 @@ helm install apm Tazama/apm-server --namespace=development
 helm install logstash Tazama/logstash --namespace=development
 helm install arangodb-ingress-proxy Tazama/arangodb-ingress-proxy --namespace=development
 helm install arango Tazama/arangodb --set ingress.enabled=true --namespace=development
-helm install redis-cluster Tazama/redis-cluster --namespace=development
 helm install nats Tazama/nats --set ingress.enabled=true --namespace=development
 ```
 
-3. We're going to install Jenkins with helm by following the official docs. Take note of post installation notes to retrieve password and port forward.
+3. Install Valkey. Valkey is an open source (BSD) high-performance key/value datastore that supports a variety workloads such as caching, message queues, and can act as a primary database.
+
+```bash
+helm install valkey-cluster oci://registry-1.docker.io/bitnamicharts/valkey --namespace=development
+```
+
+4. We're going to install Jenkins with helm by following the official docs. Take note of post installation notes to retrieve password and port forward.
 
 ```bash
 helm repo add jenkins https://charts.jenkins.io
@@ -254,8 +258,17 @@ helm repo update
 helm install jenkins jenkins/jenkins --set ingress.enabled=true --namespace=cicd
 ```
 
-Navigate to the Jenkins UI, username `admin` and retrieved password to login. Go to `Manage Jenkins`, Under `System Configuration`, select `Plugins` and install the `Configuration File`, `Nodejs` and `Docker` plugins that will enable later configuration steps.
+### Accessing Jenkins UI
 
+The following sections of the guide require you to work within the Jenkins UI. You can either access the UI through a doamin if you configured an ingress or by port forwarding.
+
+Port forward Jenkins to be accessible on localhost:8080 by running:
+  `kubectl --namespace cicd port-forward svc/jenkins 8080:8080`
+
+Get your 'admin' user password by running:
+  `kubectl exec --namespace cicd -it svc/jenkins -c jenkins -- /bin/cat /run/secrets/additional/chart-admin-password && echo`
+
+Navigate to the Jenkins UI, username `admin` and retrieved password to login. Go to `Manage Jenkins`, Under `System Configuration`, select `Plugins` and install the `Configuration File`, `Nodejs` and `Docker` plugins that will enable later configuration steps.
 
 
 **Setup Notes for Deploying AWS ECR Credentials with Helm**
@@ -343,12 +356,9 @@ For a system utilizing a variety of Helm charts, optimizing performance, storage
 - **Performance**: Adjust executors and resource limits based on your CI/CD pipeline requirements.
 - **Documentation**: [Jenkins Documentation](https://www.jenkins.io/doc/book/)
 
-## 6. Redis-Cluster
+## 6. Valkey-Cluster
 
-- **Configuration**: Set up Redis in cluster mode if high availability and scalability are required.
-- **Storage**: Use persistent storage for data durability. Configure memory limits appropriately.
-- **Performance**: Tune `maxmemory` policies and replication settings for optimal performance.
-- **Documentation**: [Redis Documentation](https://redis.io/docs/)
+- **Documentation**: [Valkey Documentation](https://artifacthub.io/packages/helm/bitnami/valkey)
 
 ## 7. Nginx Ingress Controller
 
@@ -863,12 +873,12 @@ The same reasoning applies to passwords are that explicitly stated to need a sin
   - **value:** nats
 - `NATS_SERVER_URL`: The URL for the NATS server.
   - **value:** nats.development.svc.cluster.local:4222
-- `RedisCluster`: A flag to indicate if Redis is running in cluster mode.
+- `ValkeyCluster`: A flag to indicate if Valkey is running in cluster mode.
   - **value:** true
-- `RedisPassword`: The password for accessing Redis.
+- `ValkeyPassword`: The password for accessing Valkey.
   - **eg:** ty6r5\*&p0
-- `RedisServers`: The hostname for the Redis Cluster service. **NB:** The single quotes need to be added in to the host string.
-  - **value:** '[{"host": "redis-cluster.development.svc.cluster.local", "port":6379}]'
+- `ValkeyServers`: The hostname for the Valkey Cluster service. **NB:** The single quotes need to be added in to the host string.
+  - **value:** '[{"host": "valkey-cluster-primary-0.valkey-test-headless.default.svc.cluster.local", "port":6379}]'
 - `Repository`: This parameter specifies the name of a repository
   - **value:** frmscoe
 
